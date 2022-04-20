@@ -1,8 +1,20 @@
 import pandas as pd
 import numpy as np
 
+"""
+# 농도를 ug/L 단위로, 부피는 L 단위로 바꿔서 피닉스 돌린다
+# 피닉스 점찍기 : 
+#             -> 3 points 후 R2(adj)가 0.0001 이상 감소하는 지점 바로 직전 점으로 선택
+#             -> 3 points 에 Cmax가 포함되는 경우에는 Cmax도 포함하여 선택
+# cf) Best fit ? : Cmax 이후 R2(adj)가 무조건 최대인 point
+# (Best fit != SOP 로직) 인때: best fit으로 돌렸을때 5 points 이상 포함되어 있는경우 
+#                             -> R2(adj)가 떨어졌다가 다시 올라서 max 값 되었을 수 있으므로 확인해봐야
+"""
+
 drug_list = ['Sitagliptin', 'Empagliflozin', 'Metformin']
 drug_dose_dict = {'Sitagliptin': 100, 'Empagliflozin': 25, 'Metformin': 1500}
+dose_unit_dict = {'Sitagliptin': 'mg', 'Empagliflozin': 'mg', 'Metformin': 'mg'}
+conc_unit_dict = {'Sitagliptin': 'ng/mL', 'Empagliflozin': 'ng/mL', 'Metformin': 'ng/mL'}
 
 input_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석'
 result_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석'
@@ -28,7 +40,7 @@ for drug in drug_list:
         fdf['CONC'] = fdf['Concentration'].map(lambda x: float(x) if x not in ('BLQ', 'N.C.') else np.nan)
 
         try:
-            period_change_inx = fdf[(fdf['NTIME'].diff(1).fillna(method='bfill') > 0) == False].index[0]
+            period_change_inx = fdf[fdf['NTIME'] == 0].index[-1]
         except:
             period_change_inx = len(df)+1
 
@@ -58,6 +70,14 @@ for drug in drug_list:
             drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']])
 
     drug_prep_df = pd.concat(drug_prep_df, ignore_index=True)
+
+    unit_row_dict = {'DOSE':dose_unit_dict[drug], 'NTIME': 'h', 'ATIME': 'h', 'CONC':conc_unit_dict[drug]}
+    additional_row = dict()
+    for c in list(drug_prep_df.columns):
+        try: additional_row[c] = unit_row_dict[c]
+        except: additional_row[c] = ''
+
+    drug_prep_df = pd.concat([pd.DataFrame([additional_row], index=['',]), drug_prep_df])
 
     drug_prep_df.to_csv(result_file_path, header=True, index=False)
 
