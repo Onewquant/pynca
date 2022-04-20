@@ -1131,3 +1131,56 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     Res["units"] = Units.loc[RetNames1, 'Unit'].values.tolist() + [Units.loc["AUCLST", 'Unit']] * niAUC
     Res["UsedPoints"] = tRes.get("UsedPoints", [])
     return Res
+
+def ncar_to_phoenix(result):
+
+    PW_single = ["N_Samples", "Dose", "Rsq", "Rsq_adjusted", "Corr_XY", "No_points_lambda_z", "Lambda_z",
+                 "Lambda_z_intercept", "Lambda_z_lower", "Lambda_z_upper", "HL_Lambda_z", "Span", "Tlag", "Tmax", "Cmax",
+                 "Cmax_D", "Tlast", "Clast", "Clast_pred", "AUClast", "AUClast_D", "AUCall", "AUCINF_obs", "AUCINF_D_obs",
+                 "AUC_%Extrap_obs", "Vz_F_obs", "Cl_F_obs", "AUCINF_pred", "AUCINF_D_pred", "AUC_%Extrap_pred", "Vz_F_pred",
+                 "Cl_F_pred", "AUMClast", "AUMCINF_obs", "AUMC_%Extrap_obs", "AUMCINF_pred", "AUMC_%Extrap_pred", "MRTlast",
+                 "MRTINF_obs", "MRTINF_pred"]
+    PW_multiple = ["N_Samples", "Dose", "Rsq", "Rsq_adjusted", "Corr_XY", "No_points_lambda_z", "Lambda_z",
+                   "Lambda_z_intercept", "Lambda_z_lower", "Lambda_z_upper", "HL_Lambda_z", "Span", "Tlag", "Tmax", "Cmax",
+                   "Cmax_D", "Tlast", "Clast", "Clast_pred", "AUClast", "AUClast_D", "AUCall", "AUCINF_obs", "AUCINF_D_obs",
+                   "AUC_%Extrap_obs", "AUCINF_pred", "AUCINF_D_pred", "AUC_%Extrap_pred", "Tmin", "Cmin", "Ctau", "Cavg",
+                   "Swing_Tau", "Fluctuation%", "Fluctuation%_Tau", "CLss_F", "MRTINF_obs", "MRTINF_pred", "Vz_F",
+                   "Accumulation_Index", "AUC_TAU", "AUC_TAU_D", "AUC_TAU_%Extrap", "AUMC_TAU"]
+
+    PW_Both = ['N_Samples', 'Dose', 'Rsq', 'Rsq_adjusted', 'Corr_XY', 'No_points_lambda_z', 'Lambda_z', 'Lambda_z_intercept', 'Lambda_z_lower', 'Lambda_z_upper', 'HL_Lambda_z', 'Span', 'Tlag', 'Tmax', 'Cmax', 'Cmax_D', 'Tlast', 'Clast', 'Clast_pred', 'AUClast', 'AUClast_D', 'AUCall', 'AUCINF_obs', 'AUCINF_D_obs', 'AUC_%Extrap_obs', 'Vz_F_obs', 'Cl_F_obs', 'AUCINF_pred', 'AUCINF_D_pred', 'AUC_%Extrap_pred', 'Tmin', 'Cmin', 'Ctau', 'Cavg', 'Swing', 'Swing_Tau', 'Fluctuation%', 'Fluctuation%_Tau', 'CLss_F', 'Vz_F_pred', 'Cl_F_pred', 'AUMClast', 'AUMCINF_obs', 'AUMC_%Extrap_obs', 'AUMCINF_pred', 'AUMC_%Extrap_pred', 'MRTlast', 'MRTINF_obs', 'MRTINF_pred', 'Vz_F', 'Accumulation_Index', 'AUC_TAU', 'AUC_TAU', 'AUC_TAU_D', 'AUC_TAU_%Extrap', 'AUMC_TAU']
+
+    PW_dict = {'DOSE': 'Dose', 'R2': 'Rsq', 'R2ADJ': 'Rsq_adjusted', 'CORRXY': 'Corr_XY', 'LAMZNPT': 'No_points_lambda_z',
+               'LAMZ': 'Lambda_z', 'b0': 'Lambda_z_intercept', 'LAMZLL': 'Lambda_z_lower', 'LAMZUL': 'Lambda_z_upper',
+               'LAMZHL': 'HL_Lambda_z', 'TLAG': 'Tlag', 'TMAX': 'Tmax', 'CMAX': 'Cmax', 'CMAXD': 'Cmax_D', 'TLST': 'Tlast',
+               'CLST': 'Clast', 'CLSTP': 'Clast_pred', 'AUCLST': 'AUClast', 'AUCLSTD': 'AUClast_D', 'AUCALL': 'AUCall',
+               'AUCIFO': 'AUCINF_obs', 'AUCIFOD': 'AUCINF_D_obs', 'AUCPEO': 'AUC_%Extrap_obs', 'AUCIFP': 'AUCINF_pred',
+               'AUCIFPD': 'AUCINF_D_pred', 'AUCPEP': 'AUC_%Extrap_pred', 'VZFO': 'Vz_F_obs', 'CLFO': 'Cl_F_obs',
+               'VZFP': 'Vz_F_pred', 'CLFP': 'Cl_F_pred', 'AUMCLST': 'AUMClast', 'AUMCIFO': 'AUMCINF_obs',
+               'AUMCPEO': 'AUMC_%Extrap_obs', 'AUMCIFP': 'AUMCINF_pred', 'AUMCPEP': 'AUMC_%Extrap_pred', 'SPAN': 'Span',
+               'MRTIFO': 'MRTINF_obs', 'MRTIFP': 'MRTINF_pred', 'MRTLST': 'MRTlast', 'CAVG': 'Cavg',
+               'SWINGTAU': 'Swing_Tau', 'FLUCTP': 'Fluctuation%', 'FLUCTPTAU': 'Fluctuation%_Tau', 'AUCTAUD': 'AUC_TAU_D',
+               'CLSSF': 'CLss_F', 'AUCTAUPE': 'AUC_TAU_%Extrap', 'VZF': 'Vz_F', 'ACCIDX': 'Accumulation_Index', 'TMIN': 'Tmin',
+               'CMIN': 'Cmin', 'NSAMPLES': 'N_Samples', 'TAU': 'TAU', 'CTAU': 'Ctau', 'AUCTAU': 'AUC_TAU','AUMCTAU': 'AUMC_TAU',
+               "MRTEVLST": "MRTlast", "MRTEVIFO": "MRTINF_obs", "MRTEVIFP": "MRTINF_pred", "MRTIVLST": "MRTlast",
+               "MRTIVIFO": "MRTINF_obs", "MRTIVIFP": "MRTINF_pred",
+               }
+
+
+    # Res = result
+    if np.any(result['TAU'] == 0) or np.any(np.isnan(result['TAU'])):
+        ms_type = 'single'
+    else:
+        ms_type = 'multiple'
+    key = list(result.columns)[:list(result.columns).index('NSAMPLES')]
+
+    raw_cols = pd.Series(result.columns)
+    PW_cols = raw_cols.map(PW_dict)
+    raw_cols[~PW_cols.isna()] = ''
+    PW_cols = PW_cols.replace(np.nan, '') + raw_cols
+    result.columns = list(PW_cols)
+    if ms_type == 'single':
+        result = result[key + PW_single].copy()
+    elif ms_type == 'multiple':
+        result = result[key + PW_multiple].copy()
+    result = result.loc[:, ~result.columns.duplicated(keep='first')]
+    return result
