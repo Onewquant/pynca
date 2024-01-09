@@ -52,9 +52,10 @@ for drug in drug_list:
                 pfdf.at[blqinx,'CONC'] = 0.0
 
             for blqinx in blq_after_tmax_inx_list:
-                pfdf.at[blqinx,'CONC'] = np.nan
+                pfdf.at[blqinx,'CONC'] = '.'
 
-            drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']].dropna())
+            pfdf['CONC'] = pfdf['CONC'].map(str)
+            drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']])
 
     drug_prep_df = pd.concat(drug_prep_df, ignore_index=True)
 
