@@ -4,8 +4,8 @@ import numpy as np
 drug_list = ['Sitagliptin', 'Empagliflozin', 'Metformin']
 drug_dose_dict = {'Sitagliptin': 100, 'Empagliflozin': 25, 'Metformin': 1500}
 
-input_file_dir_path = 'D:\임상시험 Sub-I\CKD379-FDI\PK분석'
-result_file_dir_path = 'D:\임상시험 Sub-I\CKD379-FDI\PK분석'
+input_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석'
+result_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석'
 
 for drug in drug_list:
 
@@ -30,7 +30,7 @@ for drug in drug_list:
         try:
             period_change_inx = fdf[(fdf['NTIME'].diff(1).fillna(method='bfill') > 0) == False].index[0]
         except:
-            continue
+            period_change_inx = len(df)+1
 
         fdf['PERIOD'] = fdf.apply(lambda row: 1 if float(row.name) < period_change_inx else 2, axis=1)
 
@@ -52,9 +52,9 @@ for drug in drug_list:
                 pfdf.at[blqinx,'CONC'] = 0.0
 
             for blqinx in blq_after_tmax_inx_list:
-                pfdf.at[blqinx,'CONC'] = '.'
+                pfdf.at[blqinx,'CONC'] = np.nan
 
-            pfdf['CONC'] = pfdf['CONC'].map(str)
+            pfdf['CONC'] = pfdf['CONC'].map(lambda x: str(x) if not np.isnan(x) else '.')
             drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']])
 
     drug_prep_df = pd.concat(drug_prep_df, ignore_index=True)
