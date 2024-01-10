@@ -121,6 +121,8 @@ MANIFEST
 *.exe
 *.txt
 *.zip
+*.sas7bdat
+*.pdf
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
