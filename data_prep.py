@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 """
 # 농도를 ug/L 단위로, 부피는 L 단위로 바꿔서 피닉스 돌린다
 # 피닉스 점찍기 : 
@@ -10,6 +11,9 @@ import numpy as np
 # (Best fit != SOP 로직) 인때: best fit으로 돌렸을때 5 points 이상 포함되어 있는경우 
 #                             -> R2(adj)가 떨어졌다가 다시 올라서 max 값 되었을 수 있으므로 확인해봐야
 """
+
+result_type = 'Phoenix'
+result_type = 'R'
 
 drug_list = ['Sitagliptin', 'Empagliflozin', 'Metformin']
 drug_dose_dict = {'Sitagliptin': 100, 'Empagliflozin': 25, 'Metformin': 1500}
@@ -26,7 +30,7 @@ for drug in drug_list:
     input_file_name = f"A125_05FDI2310_Conc_{drug}.xlsx"
     input_file_path = f"{input_file_dir_path}/{input_file_name}"
 
-    result_file_name = f"CKD379_ConcPrep_{drug}.csv"
+    result_file_name = f"CKD379_ConcPrep_{drug}({result_type}).csv"
     result_file_path = f"{result_file_dir_path}/{result_file_name}"
 
     df = pd.read_excel(input_file_path)
@@ -54,6 +58,10 @@ for drug in drug_list:
         fdf['DRUG'] = drug
 
         for period, pfdf in fdf.groupby(by=['PERIOD']):
+
+            pfdf = pfdf.sort_values(by=['NTIME'])
+            pfdf.index = list(range(min(pfdf.index),min(pfdf.index)+len(pfdf)))
+
             if not np.isnan(np.nanmax(pfdf['CONC'])):
                 tmax_inx = pfdf[pfdf['CONC'] == np.nanmax(pfdf['CONC'])].iloc[0].name
             else:
@@ -69,19 +77,22 @@ for drug in drug_list:
             for blqinx in blq_after_tmax_inx_list:
                 pfdf.at[blqinx,'CONC'] = np.nan
 
-            pfdf['CONC'] = pfdf['CONC'].map(lambda x: str(x) if not np.isnan(x) else '.')
-            drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']])
-
+            if result_type == 'Phoenix':
+                pfdf['CONC'] = pfdf['CONC'].map(lambda x: str(x) if not np.isnan(x) else '.')
+                drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']])
+            elif result_type == 'R':
+                drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']].dropna())
 
     drug_prep_df = pd.concat(drug_prep_df, ignore_index=True)
 
-    unit_row_dict = {'DOSE':dose_unit_dict[drug], 'NTIME': 'h', 'ATIME': 'h', 'CONC':conc_unit_dict[drug]}
-    additional_row = dict()
-    for c in list(drug_prep_df.columns):
-        try: additional_row[c] = unit_row_dict[c]
-        except: additional_row[c] = ''
+    if result_type == 'Phoenix':
+        unit_row_dict = {'DOSE':dose_unit_dict[drug], 'NTIME': 'h', 'ATIME': 'h', 'CONC':conc_unit_dict[drug]}
+        additional_row = dict()
+        for c in list(drug_prep_df.columns):
+            try: additional_row[c] = unit_row_dict[c]
+            except: additional_row[c] = ''
 
-    drug_prep_df = pd.concat([pd.DataFrame([additional_row], index=['',]), drug_prep_df])
+        drug_prep_df = pd.concat([pd.DataFrame([additional_row], index=['',]), drug_prep_df])
 
     drug_prep_df.to_csv(result_file_path, header=True, index=False)
 
