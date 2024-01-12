@@ -39,10 +39,13 @@ for drug in drug_list:
         fdf['ATIME'] = fdf['Actual Time'].map(lambda x: float(x))
         fdf['CONC'] = fdf['Concentration'].map(lambda x: float(x) if x not in ('BLQ', 'N.C.') else np.nan)
 
-        try:
+        if len(fdf[fdf['NTIME'] == 0])==2:
             period_change_inx = fdf[fdf['NTIME'] == 0].index[-1]
-        except:
+        elif len(fdf[fdf['NTIME'] == 0])==1:
             period_change_inx = len(df)+1
+        else:
+            print('NTIME = 0h 인 지점이 아예 없거나 3개 이상 입니다.')
+            raise ValueError
 
         fdf['PERIOD'] = fdf.apply(lambda row: 1 if float(row.name) < period_change_inx else 2, axis=1)
 
@@ -69,6 +72,7 @@ for drug in drug_list:
             pfdf['CONC'] = pfdf['CONC'].map(lambda x: str(x) if not np.isnan(x) else '.')
             drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']])
 
+
     drug_prep_df = pd.concat(drug_prep_df, ignore_index=True)
 
     unit_row_dict = {'DOSE':dose_unit_dict[drug], 'NTIME': 'h', 'ATIME': 'h', 'CONC':conc_unit_dict[drug]}
@@ -82,3 +86,5 @@ for drug in drug_list:
     drug_prep_df.to_csv(result_file_path, header=True, index=False)
 
 # drug_prep_df['ID'].unique()
+
+# drug_prep_df[['ID', 'Screening No.']].drop_duplicates().reset_index(drop=True).to_csv(f'{result_file_dir_path}/ID_SNUM.csv', index=False)
