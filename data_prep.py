@@ -99,3 +99,32 @@ for drug in drug_list:
 # drug_prep_df['ID'].unique()
 
 # drug_prep_df[['ID', 'Screening No.']].drop_duplicates().reset_index(drop=True).to_csv(f'{result_file_dir_path}/ID_SNUM.csv', index=False)
+
+
+gdf = drug_prep_df.copy()
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+plt.figure(figsize=(20, 10))
+
+
+sns.relplot(data=gdf[gdf['ID'].isin(['A001'])], x='ATIME',y='CONC', hue='FEEDING', palette='Set2', row='ID', marker='o', markersize=7, markeredgecolor='white', markeredgewidth=2, kind='line', linewidth=2)
+# plt.legend(fontsize=15)
+plt.xlabel('Time (hr)', fontsize=15)
+plt.ylabel('Concentration (mg/L)', fontsize=15)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.show()
+
+gdf
+
+plt.figure(figsize=(20, 10))
+for inx, cv in enumerate(list(gdf[covar_value].unique())):
+    sns.distplot(gdf[gdf[covar_value]==cv][target_value], color=color_list[inx], label=cv)
+plt.legend(fontsize=15)
+plt.xlabel('', fontsize=15)
+plt.xticks('', fontsize=15)
+plt.yticks(fontsize=15)
+
