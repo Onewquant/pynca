@@ -118,13 +118,3 @@ plt.xticks(fontsize=15)
 plt.yticks(fontsize=15)
 plt.show()
 
-gdf
-
-plt.figure(figsize=(20, 10))
-for inx, cv in enumerate(list(gdf[covar_value].unique())):
-    sns.distplot(gdf[gdf[covar_value]==cv][target_value], color=color_list[inx], label=cv)
-plt.legend(fontsize=15)
-plt.xlabel('', fontsize=15)
-plt.xticks('', fontsize=15)
-plt.yticks(fontsize=15)
-
