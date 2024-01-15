@@ -116,6 +116,7 @@ MANIFEST
 *.png
 *.jpg
 *.csv
+*.xls
 *.joblib
 *.pickle
 *.exe

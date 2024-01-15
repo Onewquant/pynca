@@ -23,6 +23,8 @@ conc_unit_dict = {'Sitagliptin': 'ng/mL', 'Empagliflozin': 'ng/mL', 'Metformin':
 input_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석'
 result_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석'
 
+drug_prep_df_dict = dict()
+
 for drug in drug_list:
 
     drug_prep_df = list()
@@ -94,6 +96,7 @@ for drug in drug_list:
 
         drug_prep_df = pd.concat([pd.DataFrame([additional_row], index=['',]), drug_prep_df])
 
+    drug_prep_df_dict[drug] = drug_prep_df.copy()
     drug_prep_df.to_csv(result_file_path, header=True, index=False)
 
 # drug_prep_df['ID'].unique()
@@ -101,20 +104,4 @@ for drug in drug_list:
 # drug_prep_df[['ID', 'Screening No.']].drop_duplicates().reset_index(drop=True).to_csv(f'{result_file_dir_path}/ID_SNUM.csv', index=False)
 
 
-gdf = drug_prep_df.copy()
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-
-plt.figure(figsize=(20, 10))
-
-
-sns.relplot(data=gdf[gdf['ID'].isin(['A001'])], x='ATIME',y='CONC', hue='FEEDING', palette='Set2', row='ID', marker='o', markersize=7, markeredgecolor='white', markeredgewidth=2, kind='line', linewidth=2)
-# plt.legend(fontsize=15)
-plt.xlabel('Time (hr)', fontsize=15)
-plt.ylabel('Concentration (mg/L)', fontsize=15)
-plt.xticks(fontsize=15)
-plt.yticks(fontsize=15)
-plt.show()
 
