@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import gmean
 
 result_type = 'Phoenix'
 result_type = 'R'
@@ -29,8 +30,8 @@ gdf = drug_prep_df_dict['Metformin']
 # max(gdf['CONC'])
 # max(gdf['ATIME'])
 # g_palette = 'Set2'
-g_palette = 'Dark2'
-g = sns.relplot(data=gdf, x='NTIME',y='CONC', marker='o', markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='-', errorbar="ci", estimator='mean')
+# g_palette = 'Dark2'
+# g = sns.relplot(data=gdf, x='NTIME',y='CONC', hue='FEEDING', hue_order=['FASTING', 'FED'], marker='o', markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='-', errorbar="ci", estimator=gmean)
 
 for drug in drug_list:
 
