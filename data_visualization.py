@@ -1,9 +1,7 @@
-import os
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy.stats import gmean
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath("__file__")))
+
+from project_tools import *
 
 result_type = 'Phoenix'
 result_type = 'R'
@@ -15,69 +13,42 @@ drug_prep_df_dict = dict()
 for drug in drug_list:
     result_file_path = f"{input_file_dir_path}/" + f"CKD379_ConcPrep_{drug}({result_type}).csv"
     drug_prep_df_dict[drug] = pd.read_csv(result_file_path)
+    drug_prep_df_dict[drug]['FEEDING'] = drug_prep_df_dict[drug]['FEEDING'].replace('FASTING','FASTED')
     # drug_prep_df_dict[drug]['Subject'] = drug_prep_df_dict[drug].apply(lambda row:f'{row["ID"]}|{row["FEEDING"]}',axis=1)
-
-gdf = drug_prep_df_dict['Sitagliptin']
-gdf = drug_prep_df_dict['Empagliflozin']
-gdf = drug_prep_df_dict['Metformin']
-
-
-# fig, axes = plt.subplots(nrows=2,ncols=2, figsize=(20, 40))
-# sns.relplot(data=gdf[gdf['ID'].isin(['A001'])],x='ATIME',y='CONC', ax=axes)
 
 ############################
 
-# max(gdf['CONC'])
-# max(gdf['ATIME'])
-# g_palette = 'Set2'
-# g_palette = 'Dark2'
-# g = sns.relplot(data=gdf, x='NTIME',y='CONC', hue='FEEDING', hue_order=['FASTING', 'FED'], marker='o', markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='-', errorbar="ci", estimator=gmean)
+# gdf = drug_prep_df_dict['Sitagliptin']
+# gdf = drug_prep_df_dict['Empagliflozin']
+# gdf = drug_prep_df_dict['Metformin']
+# drug = 'Metformin'
+# sid_list = ['A001']
 
 for drug in drug_list:
 
-    g_palette = 'Dark2'
-    sns.set_style("whitegrid",{'grid.linestyle':':',
-                 })
-
     gdf = drug_prep_df_dict[drug]
-    # drug = gdf['DRUG'].iloc[0]
-    # sid = 'A001'
+
+    ## Population
+
+    time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, result_file_dir_path=result_file_dir_path, estimator=np.mean, errorbar=("sd",1), err_style='band')
+
+    plt.cla()
+    plt.clf()
+    plt.close()
+
+    ## Individual
+
     for sid in gdf['ID'].unique():
 
-        g = sns.relplot(data=gdf[gdf['ID'].isin([sid])], hue='FEEDING', hue_order=['FASTING', 'FED'], x='ATIME',y='CONC', palette=g_palette, marker='o', markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--')
+        time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, result_file_dir_path=result_file_dir_path, estimator=np.mean, errorbar=("sd",1), err_style='band')
 
-        g.fig.set_size_inches(14,10)
-
-        # g.set_axis_labels('Time (hr)', 'Concentration (mg/L)')
-        # sns.move_legend(g, 'upper right', frameon=True)
-        # g.fig.subplots_adjust(top=0.85)
-        sns.move_legend(g, 'center right', title=None, frameon=False, fontsize=15)
-        # sns.move_legend(g, 'upper center', ncol=2, title=None, frameon=False, fontsize=15)
-        # g.fig.suptitle("A001", fontsize=20, fontweight='bold')
-
-        plt.tight_layout(pad=2.5)
-        plt.title(sid, fontsize=20)
-        plt.xlabel('Time (h)', fontsize=15)
-        plt.ylabel(f'{drug} plasma concentration (mg/L)', fontsize=15)
-
-        plt.xticks(np.arange(-5,55, step=5), fontsize=15)
-        plt.xlim(-1,55)
-
-        if drug=='Metformin':
-            plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=15)
-            plt.ylim(-50, 2500)
-        else:
-            plt.yticks(np.linspace(0, 650, 11, endpoint=True), fontsize=15)
-            plt.ylim(-10,650)
-
-        if not os.path.exists(f"{result_file_dir_path}"): os.mkdir(f"{result_file_dir_path}")
-        if not os.path.exists(f"{result_file_dir_path}/{drug}"): os.mkdir(f"{result_file_dir_path}/{drug}")
-
-        plt.savefig(f"{result_file_dir_path}/{drug}/individual_{drug}_{sid}.png", dpi=300)
         plt.cla()
         plt.clf()
         plt.close()
 ############################
+
+# fig, axes = plt.subplots(nrows=2,ncols=2, figsize=(20, 40))
+# sns.relplot(data=gdf[gdf['ID'].isin(['A001'])],x='ATIME',y='CONC', ax=axes)
 
 
 # g_palette = 'Set2'
