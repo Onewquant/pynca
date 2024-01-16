@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import gmean
 
-def time_to_conc_graph_ckd(gdf, sid_list, drug, result_file_dir_path, file_format='png', dpi=300, estimator=np.mean, errorbar=("sd",2), err_style='band'):
+def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_order=None, file_format='png', dpi=300, estimator=np.mean, errorbar=("sd",2), err_style='band'):
 
     g_palette = 'Dark2'
     sns.set_style("whitegrid", {'grid.linestyle': ':',
@@ -29,7 +29,7 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, result_file_dir_path, file_forma
         time_col = 'NTIME'
     filename = f'{mode}_{drug}_{last_tag}'
 
-    g = sns.relplot(data=gdf[gdf['ID'].isin(sid_list)], hue='FEEDING', hue_order=['FASTING', 'FED'], x=time_col,y='CONC', palette=g_palette, marker='o', markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', errorbar=errorbar, estimator=estimator, err_style=err_style)
+    g = sns.relplot(data=gdf[gdf['ID'].isin(sid_list)], x=time_col,y='CONC', palette=g_palette, marker='o',hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', errorbar=errorbar, estimator=estimator, err_style=err_style)
     # g.ax.errorbar(x)
     g.fig.set_size_inches(14,10)
 
@@ -43,7 +43,7 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, result_file_dir_path, file_forma
     plt.tight_layout(pad=2.5)
 
     plt.xlabel('Time (h)', fontsize=15)
-    plt.ylabel(f'{drug} plasma concentration (mg/L)', fontsize=15)
+    plt.ylabel(f'{drug} plasma concentration (μg/L)', fontsize=15)
 
     plt.xticks(np.arange(-5,55, step=5), fontsize=15)
     plt.xlim(-1,55)

@@ -23,6 +23,11 @@ for drug in drug_list:
 # gdf = drug_prep_df_dict['Metformin']
 # drug = 'Metformin'
 # sid_list = ['A001']
+hue = 'FEEDING'
+hue_order = ['FASTED','FED']
+estimator=np.mean
+errorbar=("sd",1)
+err_style='band'
 
 for drug in drug_list:
 
@@ -30,7 +35,7 @@ for drug in drug_list:
 
     ## Population
 
-    time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, result_file_dir_path=result_file_dir_path, estimator=np.mean, errorbar=("sd",1), err_style='band')
+    time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style)
 
     plt.cla()
     plt.clf()
@@ -40,7 +45,7 @@ for drug in drug_list:
 
     for sid in gdf['ID'].unique():
 
-        time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, result_file_dir_path=result_file_dir_path, estimator=np.mean, errorbar=("sd",1), err_style='band')
+        time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style)
 
         plt.cla()
         plt.clf()
