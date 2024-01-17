@@ -9,12 +9,7 @@ drug_list = ['Sitagliptin', 'Empagliflozin', 'Metformin']
 input_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석'
 result_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK분석/Figures'
 
-drug_prep_df_dict = dict()
-for drug in drug_list:
-    result_file_path = f"{input_file_dir_path}/" + f"CKD379_ConcPrep_{drug}({result_type}).csv"
-    drug_prep_df_dict[drug] = pd.read_csv(result_file_path)
-    drug_prep_df_dict[drug]['FEEDING'] = drug_prep_df_dict[drug]['FEEDING'].replace('FASTING','FASTED')
-    # drug_prep_df_dict[drug]['Subject'] = drug_prep_df_dict[drug].apply(lambda row:f'{row["ID"]}|{row["FEEDING"]}',axis=1)
+drug_prep_df_dict = load_data_dict(drug_list=drug_list, filename_format=f"CKD379_ConcPrep_[drug]({result_type}).csv", input_file_dir_path=input_file_dir_path)
 
 ############################
 

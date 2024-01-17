@@ -5,6 +5,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import gmean
 
+def load_data_dict(drug_list, filename_format, input_file_dir_path):
+    drug_prep_df_dict = dict()
+    for drug in drug_list:
+        result_file_path = f"{input_file_dir_path}/" + filename_format.replace('[drug]',drug)
+        if filename_format.split('.')[-1]=='csv':
+            drug_prep_df_dict[drug] = pd.read_csv(result_file_path)
+        if filename_format.split('.')[-1] == 'xls':
+            drug_prep_df_dict[drug] = pd.read_excel(result_file_path)
+        drug_prep_df_dict[drug]['FEEDING'] = drug_prep_df_dict[drug]['FEEDING'].replace('FASTING','FASTED')
+        # drug_prep_df_dict[drug]['Subject'] = drug_prep_df_dict[drug].apply(lambda row:f'{row["ID"]}|{row["FEEDING"]}',axis=1)
+    return drug_prep_df_dict
+
 def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_order=None, file_format='png', dpi=300, estimator=np.mean, errorbar=("sd",2), err_style='band'):
 
     g_palette = 'Dark2'
