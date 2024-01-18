@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import gmean
+
+def g_mean(x):
+    return np.exp((x.map(np.log)).mean())
 
 def load_data_dict(drug_list, filename_format, input_file_dir_path):
     drug_prep_df_dict = dict()

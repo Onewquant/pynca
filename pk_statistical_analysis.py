@@ -21,29 +21,65 @@ pkparams_dict = {'AUClast':'AUCt',
                  'Vz_F':'Vd/F'
                  }
 
+pkparams_result_dict = dict()
+gmr_result_dict = dict()
 
+for drug, df in drug_fpp_df_dict.items():
 
-
-drug_pkparams_list = list()
-
-for drug, df in drug_fpp_df_dict.items(): break
+    drug_pkparams_df = list()
+    drug_gmr_df = list()
 
     df = df.iloc[1:].reset_index(drop=True)
 
-    for fpp_col, pk_param in pkparams_dict.items(): break
+    for compcol, comp_df in df.groupby(by=comp_col):
 
-        for compcol, comp_df in df.groupby(by=comp_col): break
+        for fpp_col, pk_param in pkparams_dict.items():
 
-            pk_mean = round(np.mean(df[fpp_col]),3)
-            pk_sd = round(np.std(df[fpp_col]),3)
-            pk_cv_pct = round(100*pk_sd/pk_mean,2)
-            pk_median = round(np.median(df[fpp_col]),3)
-            pk_min = round(np.min(df[fpp_col]),3)
-            pk_max = round(np.max(df[fpp_col]),3)
+            pk_mean = round(np.mean(comp_df[fpp_col]),2)
+            pk_sd = round(np.std(comp_df[fpp_col]),2)
+            pk_cv_pct = round(100*pk_sd/pk_mean,1)
+            pk_median = round(np.median(comp_df[fpp_col]),2)
+            pk_min = round(np.min(comp_df[fpp_col]),2)
+            pk_max = round(np.max(comp_df[fpp_col]),2)
 
-            drug_pkparams_list.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Mean', 'Feeding': compcol, 'Value':pk_mean})
-            drug_pkparams_list.append({'Substance':drug,'Parameter':pk_param,'Statistics':'SD', 'Feeding': compcol, 'Value':pk_sd})
-            drug_pkparams_list.append({'Substance':drug,'Parameter':pk_param,'Statistics':'CV%', 'Feeding': compcol, 'Value':pk_cv_pct})
-            drug_pkparams_list.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Median', 'Feeding': compcol, 'Value':pk_median})
-            drug_pkparams_list.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Min', 'Feeding': compcol, 'Value':pk_min})
-            drug_pkparams_list.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Max', 'Feeding': compcol, 'Value':pk_max})
+            pk_geo_mean = round(g_mean(x=comp_df[fpp_col]),2)
+
+            drug_pkparams_df.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Mean', 'Feeding': compcol, 'Value':pk_mean})
+            drug_pkparams_df.append({'Substance':drug,'Parameter':pk_param,'Statistics':'SD', 'Feeding': compcol, 'Value':pk_sd})
+            drug_pkparams_df.append({'Substance':drug,'Parameter':pk_param,'Statistics':'CV%', 'Feeding': compcol, 'Value':pk_cv_pct})
+            drug_pkparams_df.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Median', 'Feeding': compcol, 'Value':pk_median})
+            drug_pkparams_df.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Min', 'Feeding': compcol, 'Value':pk_min})
+            drug_pkparams_df.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Max', 'Feeding': compcol, 'Value':pk_max})
+
+            drug_gmr_df.append({'Substance':drug,'Parameter':pk_param,'Statistics':'Geometric Mean', 'Feeding': compcol, 'Value':pk_geo_mean})
+
+    drug_pkparams_df = pd.DataFrame(drug_pkparams_df)
+    drug_gmr_df = pd.DataFrame(drug_gmr_df)
+    # Geometric Mean 비교
+
+    pkparams_result_dict[drug] = pd.pivot_table(data=drug_pkparams_df, index=['Substance','Parameter','Statistics'], columns=['Feeding'], values='Value')
+    gmr_result_dict[drug] = pd.pivot_table(data=drug_gmr_df, index=['Substance','Parameter','Statistics'], columns=['Feeding'], values='Value')
+
+    pkparams_result_dict[drug].columns.name = None
+    gmr_result_dict[drug].columns.name = None
+
+    pkparams_result_dict[drug] = pkparams_result_dict[drug][['FED','FASTED']].copy()
+    gmr_result_dict[drug] = gmr_result_dict[drug][['FED','FASTED']].copy()
+
+    gmr_result_dict[drug]['GMR'] = gmr_result_dict[drug]['FED']/gmr_result_dict[drug]['FASTED']
+    # gmr_result_dict[drug]['GMR(CI)'] =
+
+    # z값
+    # 90% CI : 1.645
+    # 95% CI : 1.96
+    # np.log(0.8)
+    # np.log(1.25)
+    # drug_pkparams_dict[drug].index.names
+
+# 90% CI : 1.645
+drug = 'Sitagliptin'
+drug = 'Empagliflozin'
+drug = 'Metformin'
+
+pkparams_result_dict[drug]
+gmr_result_dict[drug]
