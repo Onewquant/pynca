@@ -13,7 +13,7 @@ import numpy as np
 """
 
 result_type = 'Phoenix'
-result_type = 'R'
+# result_type = 'R'
 
 drug_list = ['Sitagliptin', 'Empagliflozin', 'Metformin']
 drug_dose_dict = {'Sitagliptin': 100, 'Empagliflozin': 25, 'Metformin': 1500}
@@ -55,7 +55,7 @@ for drug in drug_list:
 
         fdf['PERIOD'] = fdf.apply(lambda row: 1 if float(row.name) < period_change_inx else 2, axis=1)
 
-        fdf['FEEDING'] = fdf.apply(lambda row: f"{row['ID'][0]}{row['PERIOD']}", axis=1).map({'A1':'FED','A2':'FASTING','B1':'FASTING','B2':'FED'})
+        fdf['FEEDING'] = fdf.apply(lambda row: f"{row['ID'][0]}{row['PERIOD']}", axis=1).map({'A1':'FED','A2':'FASTED','B1':'FASTED','B2':'FED'})
 
         fdf['DRUG'] = drug
 
