@@ -17,34 +17,37 @@ drug_prep_df_dict = load_data_dict(drug_list=drug_list, filename_format=f"CKD379
 # gdf = drug_prep_df_dict['Empagliflozin']
 # gdf = drug_prep_df_dict['Metformin']
 # drug = 'Metformin'
+# drug='Sitagliptin'
 # sid_list = ['A001']
 hue = 'FEEDING'
 hue_order = ['FASTED','FED']
 estimator=np.mean
 errorbar=("sd",1)
 err_style='band'
+yscale = 'log'
 
-for drug in drug_list:
+for yscale in ['linear','log']:
+    for drug in drug_list:
 
-    gdf = drug_prep_df_dict[drug]
+        gdf = drug_prep_df_dict[drug]
 
-    ## Population
+        ## Population
 
-    time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style)
-
-    plt.cla()
-    plt.clf()
-    plt.close()
-
-    ## Individual
-
-    for sid in gdf['ID'].unique():
-
-        time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style)
+        time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style, yscale=yscale)
 
         plt.cla()
         plt.clf()
         plt.close()
+
+        ## Individual
+
+        for sid in gdf['ID'].unique():
+
+            time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style, yscale=yscale)
+
+            plt.cla()
+            plt.clf()
+            plt.close()
 ############################
 
 # fig, axes = plt.subplots(nrows=2,ncols=2, figsize=(20, 40))

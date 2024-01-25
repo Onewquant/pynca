@@ -19,7 +19,7 @@ def load_data_dict(drug_list, filename_format, input_file_dir_path):
         # drug_prep_df_dict[drug]['Subject'] = drug_prep_df_dict[drug].apply(lambda row:f'{row["ID"]}|{row["FEEDING"]}',axis=1)
     return drug_prep_df_dict
 
-def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_order=None, file_format='png', dpi=300, estimator=np.mean, errorbar=("sd",2), err_style='band'):
+def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_order=None, file_format='png', dpi=300, estimator=np.mean, errorbar=("sd",2), err_style='band', yscale='linear'):
 
     g_palette = 'Dark2'
     sns.set_style("whitegrid", {'grid.linestyle': ':',
@@ -46,7 +46,8 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
     g = sns.relplot(data=gdf[gdf['ID'].isin(sid_list)], x=time_col,y='CONC', palette=g_palette, marker='o',hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', errorbar=errorbar, estimator=estimator, err_style=err_style)
     # g.ax.errorbar(x)
     g.fig.set_size_inches(14,10)
-
+    if yscale=="log": g.set(yscale="log")
+    else: pass
     # g.set_axis_labels('Time (hr)', 'Concentration (mg/L)')
     # sns.move_legend(g, 'upper right', frameon=True)
     # g.fig.subplots_adjust(top=0.85)
@@ -63,14 +64,23 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
     plt.xlim(-1,55)
 
     if drug=='Metformin':
-        plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=15)
-        plt.ylim(-50, 2500)
+        if yscale=='linear':
+            plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=15)
+            plt.ylim(-50, 2500)
+        elif yscale=='log':
+            plt.yticks([0,1,10,100,1000,3500], fontsize=15)
+            plt.ylim(1, 3500)
     else:
-        plt.yticks(np.linspace(0, 650, 11, endpoint=True), fontsize=15)
-        plt.ylim(-10,650)
+        if yscale == 'linear':
+            plt.yticks(np.linspace(0, 650, 11, endpoint=True), fontsize=15)
+            plt.ylim(-10,650)
+        elif yscale=='log':
+            plt.yticks([0,1,10,100,1000], fontsize=15)
+            plt.ylim(1, 1000)
 
     if not os.path.exists(f"{result_file_dir_path}"): os.mkdir(f"{result_file_dir_path}")
-    if not os.path.exists(f"{result_file_dir_path}/{mode}"): os.mkdir(f"{result_file_dir_path}/{mode}")
-    if not os.path.exists(f"{result_file_dir_path}/{mode}/{drug}"): os.mkdir(f"{result_file_dir_path}/{mode}/{drug}")
-    plt.savefig(f"{result_file_dir_path}/{mode}/{drug}/{filename}.{file_format}", dpi=dpi)
+    if not os.path.exists(f"{result_file_dir_path}/{yscale}"): os.mkdir(f"{result_file_dir_path}/{yscale}")
+    if not os.path.exists(f"{result_file_dir_path}/{yscale}/{mode}"): os.mkdir(f"{result_file_dir_path}/{yscale}/{mode}")
+    if not os.path.exists(f"{result_file_dir_path}/{yscale}/{mode}/{drug}"): os.mkdir(f"{result_file_dir_path}/{yscale}/{mode}/{drug}")
+    plt.savefig(f"{result_file_dir_path}/{yscale}/{mode}/{drug}/{filename}.{file_format}", dpi=dpi)
 
