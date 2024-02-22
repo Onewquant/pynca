@@ -22,8 +22,8 @@ drug_prep_df_dict = load_data_dict(drug_list=drug_list, filename_format=f"CKD379
 hue = 'FEEDING'
 hue_order = ['FASTED','FED']
 estimator=np.mean
-errorbar=("sd",1)
-err_style='bars'
+# errorbar=("sd",1)
+# err_style='bars'
 # yscale = 'log'
 # yscale = 'linear'
 
@@ -34,7 +34,7 @@ for yscale in ['linear','log']:
 
         ## Population
 
-        time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style, yscale=yscale)
+        time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, yscale=yscale)
 
         plt.cla()
         plt.clf()
@@ -44,7 +44,7 @@ for yscale in ['linear','log']:
 
         for sid in gdf['ID'].unique():
 
-            time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, errorbar=errorbar, err_style=err_style, yscale=yscale)
+            time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, yscale=yscale)
 
             plt.cla()
             plt.clf()
