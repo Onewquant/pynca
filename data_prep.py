@@ -13,7 +13,7 @@ import numpy as np
 """
 
 result_type = 'Phoenix'
-# result_type = 'R'
+result_type = 'R'
 
 drug_list = ['Sitagliptin', 'Empagliflozin', 'Metformin']
 drug_dose_dict = {'Sitagliptin': 100, 'Empagliflozin': 25, 'Metformin': 1500}

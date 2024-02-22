@@ -22,6 +22,7 @@ def load_data_dict(drug_list, filename_format, input_file_dir_path):
 def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_order=None, file_format='png', dpi=300, estimator=np.mean, errorbar=("sd",2), err_style='band', yscale='linear'):
 
     g_palette = 'Dark2'
+    g_palette_colors = sns.color_palette('Dark2')
     sns.set_style("whitegrid", {'grid.linestyle': ':',
                                 })
 
@@ -43,8 +44,31 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
         time_col = 'NTIME'
     filename = f'{mode}_{drug}_{last_tag}'
 
-    g = sns.relplot(data=gdf[gdf['ID'].isin(sid_list)], x=time_col,y='CONC', palette=g_palette, marker='o',hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', errorbar=errorbar, estimator=estimator, err_style=err_style)
-    # g.ax.errorbar(x)
+    act_gdf = gdf[gdf['ID'].isin(sid_list)].copy()
+
+    # g = sns.relplot(data=act_gdf, x=time_col,y='CONC', palette=g_palette, marker='o',hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', errorbar=errorbar, estimator=estimator, err_style=err_style)
+    g = sns.relplot(data=act_gdf, x=time_col, y='CONC', palette=g_palette, marker='o', hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1, linestyle='--', estimator=estimator, ci=None)
+
+    ## 에러바 데이터 생성
+
+    eb_df_dict = dict()
+    for hue_inx, hue_act_gdf in act_gdf.groupby(hue):
+        for_eb_df = hue_act_gdf.groupby('NTIME')['CONC'].agg(['mean', 'std']).reset_index(drop=False)
+        eb_x = tuple(for_eb_df['NTIME'])
+        eb_y = tuple(for_eb_df['mean'])
+        eb_y_errbar = tuple(for_eb_df['std'])
+
+        eb_df_dict[hue_inx] = {'for_eb_df':for_eb_df,'eb_x':eb_x, 'eb_y':eb_y, 'eb_y_errbar':eb_y_errbar}
+
+    hue_order_dict = dict([(ho,i) for i, ho in enumerate(hue_order)])
+    for hue_eb_key, hue_eb_val in eb_df_dict.items():
+        g.ax.errorbar(hue_eb_val['eb_x'], hue_eb_val['eb_y'], yerr=[tuple(np.zeros(len(eb_y))), hue_eb_val['eb_y_errbar']], fmt='o', ecolor=g_palette_colors[hue_order_dict[hue_eb_key]], capsize=2, capthick=1,barsabove=True)
+
+    # eb.get_children()[3].set_linestyle('--')  ## 에러 바 라인 스타일
+    # eb.get_children()[1].set_marker('v') ## 에러 바 아래쪽 마커 스타일
+    # eb.get_children()[2].set_marker('^') ## 에러 바 위쪽 마커 스타일
+    # palette = sns.color_palette('Dark2')
+
     g.fig.set_size_inches(14,10)
     if yscale=="log": g.set(yscale="log")
     else: pass

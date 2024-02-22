@@ -23,8 +23,9 @@ hue = 'FEEDING'
 hue_order = ['FASTED','FED']
 estimator=np.mean
 errorbar=("sd",1)
-err_style='band'
-yscale = 'log'
+err_style='bars'
+# yscale = 'log'
+# yscale = 'linear'
 
 for yscale in ['linear','log']:
     for drug in drug_list:
