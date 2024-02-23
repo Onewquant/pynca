@@ -40,14 +40,16 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
         # else:
         #     errorbar_str = ''
         # title_str = f'Sample Mean{errorbar_str}'
-        last_tag = 'sample'+str(tuple(sid_list)).replace(",)",")").replace("'","")
+        # last_tag = 'sample'+str(tuple(sid_list)).replace(",)",")").replace("'","")
+        last_tag = 'sample'
         time_col = 'NTIME'
     filename = f'{mode}_{drug}_{last_tag}'
 
     act_gdf = gdf[gdf['ID'].isin(sid_list)].copy()
 
     # g = sns.relplot(data=act_gdf, x=time_col,y='CONC', palette=g_palette, marker='o',hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', errorbar=errorbar, estimator=estimator, err_style=err_style)
-    g = sns.relplot(data=act_gdf, x=time_col, y='CONC', palette=g_palette, marker='o', hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1, linestyle='--', estimator=estimator, errorbar=None)
+    g = sns.relplot(data=act_gdf, x=time_col, y='CONC', palette=g_palette, marker='o', hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', estimator=estimator, errorbar=None)
+    # g = sns.relplot(data=act_gdf, x=time_col, y='CONC', palette=g_palette, marker='o', hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', estimator=estimator, errorbar=None)
 
     if mode=='Population':
 
@@ -64,7 +66,7 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
 
         hue_order_dict = dict([(ho,i) for i, ho in enumerate(hue_order)])
         for hue_eb_key, hue_eb_val in eb_df_dict.items():
-            g.ax.errorbar(hue_eb_val['eb_x'], hue_eb_val['eb_y'], yerr=[tuple(np.zeros(len(eb_y))), hue_eb_val['eb_y_errbar']], fmt='o', ecolor=g_palette_colors[hue_order_dict[hue_eb_key]], capsize=2, capthick=1,barsabove=True)
+            g.ax.errorbar(hue_eb_val['eb_x'], hue_eb_val['eb_y'], yerr=[tuple(np.zeros(len(eb_y))), hue_eb_val['eb_y_errbar']], fmt='o', ecolor=g_palette_colors[hue_order_dict[hue_eb_key]], capsize=3, capthick=2,barsabove=True)
 
     # eb.get_children()[3].set_linestyle('--')  ## 에러 바 라인 스타일
     # eb.get_children()[1].set_marker('v') ## 에러 바 아래쪽 마커 스타일
