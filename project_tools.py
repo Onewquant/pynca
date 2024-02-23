@@ -77,7 +77,11 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
     # eb.get_children()[2].set_marker('^') ## 에러 바 위쪽 마커 스타일
     # palette = sns.color_palette('Dark2')
 
-    g.fig.set_size_inches(14,10)
+
+    # g.fig.set_size_inches(15,11)
+    g.fig.set_size_inches(15, 11)
+    # g.fig.subplots_adjust(left=0.1, right=0.1)
+
     if yscale=="log": g.set(yscale="log")
     else: pass
     # g.set_axis_labels('Time (hr)', 'Concentration (mg/L)')
@@ -87,10 +91,10 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
     # sns.move_legend(g, 'upper center', ncol=2, title=None, frameon=False, fontsize=15)
     # g.fig.suptitle("A001", fontsize=20, fontweight='bold')
     # plt.title(title_str, fontsize=20)
-    plt.tight_layout(pad=2.5)
+    plt.tight_layout(pad=3.5)
 
-    plt.xlabel('Time (h)', fontsize=20, labelpad=15)
-    plt.ylabel(f'{drug} plasma concentration (μg/L)', fontsize=20, labelpad=15)
+    plt.xlabel('Time (h)', fontsize=20, labelpad=8)
+    plt.ylabel(f'{drug} plasma concentration (μg/L)', fontsize=20, labelpad=8)
 
     plt.xticks(np.arange(-6,54, step=6), fontsize=18)
     plt.xlim(-1,54)
@@ -109,6 +113,8 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
         elif yscale=='log':
             plt.yticks([0,1,10,100,1000], fontsize=18)
             plt.ylim(1, 1000)
+
+
     if save_fig:
         if not os.path.exists(f"{result_file_dir_path}"): os.mkdir(f"{result_file_dir_path}")
         if not os.path.exists(f"{result_file_dir_path}/{yscale}"): os.mkdir(f"{result_file_dir_path}/{yscale}")
