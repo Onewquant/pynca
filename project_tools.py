@@ -19,7 +19,7 @@ def load_data_dict(drug_list, filename_format, input_file_dir_path):
         # drug_prep_df_dict[drug]['Subject'] = drug_prep_df_dict[drug].apply(lambda row:f'{row["ID"]}|{row["FEEDING"]}',axis=1)
     return drug_prep_df_dict
 
-def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_order=None, file_format='png', dpi=300, estimator=np.mean, errorbar=("sd",2), err_style='band', yscale='linear'):
+def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_order=None, file_format='png', dpi=300, estimator=np.mean, yscale='linear', save_fig=True):
 
     g_palette = 'Dark2'
     g_palette_colors = sns.color_palette('Dark2')
@@ -47,9 +47,12 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
 
     act_gdf = gdf[gdf['ID'].isin(sid_list)].copy()
 
+    marker_list = ['o', '^', 'v','<', '>', 's', 'p', '*', 'h', 'H', 'D', 'd', '+', 'x', '|', '_']
     # g = sns.relplot(data=act_gdf, x=time_col,y='CONC', palette=g_palette, marker='o',hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', errorbar=errorbar, estimator=estimator, err_style=err_style)
-    g = sns.relplot(data=act_gdf, x=time_col, y='CONC', palette=g_palette, marker='o', hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', estimator=estimator, errorbar=None)
+    g = sns.relplot(data=act_gdf, x=time_col, y='CONC', palette=g_palette, markers=marker_list[:len(hue_order)], hue=hue, hue_order=hue_order, style=hue, style_order=hue_order, markersize=10, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=2, estimator=estimator, errorbar=None)
     # g = sns.relplot(data=act_gdf, x=time_col, y='CONC', palette=g_palette, marker='o', hue=hue, hue_order=hue_order, markersize=7, markeredgecolor='white', markeredgewidth=1, kind='line', linewidth=1.5, linestyle='--', estimator=estimator, errorbar=None)
+    # errorbar = ("sd", 2), err_style = 'band',
+    # plt.setp(plt.gca().get_lines()[1], fillstyle='none')
 
     if mode=='Population':
 
@@ -66,7 +69,8 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
 
         hue_order_dict = dict([(ho,i) for i, ho in enumerate(hue_order)])
         for hue_eb_key, hue_eb_val in eb_df_dict.items():
-            g.ax.errorbar(hue_eb_val['eb_x'], hue_eb_val['eb_y'], yerr=[tuple(np.zeros(len(eb_y))), hue_eb_val['eb_y_errbar']], fmt='o', ecolor=g_palette_colors[hue_order_dict[hue_eb_key]], capsize=3, capthick=2,barsabove=True)
+            g.ax.errorbar(hue_eb_val['eb_x'], hue_eb_val['eb_y'], yerr=[tuple(np.zeros(len(eb_y))), hue_eb_val['eb_y_errbar']], fmt='o', ecolor=g_palette_colors[hue_order_dict[hue_eb_key]], capsize=2.5, capthick=2,barsabove=True)
+
 
     # eb.get_children()[3].set_linestyle('--')  ## 에러 바 라인 스타일
     # eb.get_children()[1].set_marker('v') ## 에러 바 아래쪽 마커 스타일
@@ -79,36 +83,36 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
     # g.set_axis_labels('Time (hr)', 'Concentration (mg/L)')
     # sns.move_legend(g, 'upper right', frameon=True)
     # g.fig.subplots_adjust(top=0.85)
-    sns.move_legend(g, 'center right', title=None, frameon=False, fontsize=15)
+    sns.move_legend(g, 'center right', title=None, frameon=False, fontsize=18)
     # sns.move_legend(g, 'upper center', ncol=2, title=None, frameon=False, fontsize=15)
     # g.fig.suptitle("A001", fontsize=20, fontweight='bold')
     # plt.title(title_str, fontsize=20)
     plt.tight_layout(pad=2.5)
 
-    plt.xlabel('Time (h)', fontsize=15)
-    plt.ylabel(f'{drug} plasma concentration (μg/L)', fontsize=15)
+    plt.xlabel('Time (h)', fontsize=20, labelpad=15)
+    plt.ylabel(f'{drug} plasma concentration (μg/L)', fontsize=20, labelpad=15)
 
-    plt.xticks(np.arange(-5,55, step=5), fontsize=15)
-    plt.xlim(-1,55)
+    plt.xticks(np.arange(-6,54, step=6), fontsize=18)
+    plt.xlim(-1,54)
 
     if drug=='Metformin':
         if yscale=='linear':
-            plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=15)
+            plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=18)
             plt.ylim(-50, 2500)
         elif yscale=='log':
-            plt.yticks([0,1,10,100,1000,3500], fontsize=15)
+            plt.yticks([0,1,10,100,1000,3500], fontsize=18)
             plt.ylim(1, 3500)
     else:
         if yscale == 'linear':
-            plt.yticks(np.linspace(0, 650, 11, endpoint=True), fontsize=15)
+            plt.yticks(np.linspace(0, 650, 11, endpoint=True), fontsize=18)
             plt.ylim(-10,650)
         elif yscale=='log':
-            plt.yticks([0,1,10,100,1000], fontsize=15)
+            plt.yticks([0,1,10,100,1000], fontsize=18)
             plt.ylim(1, 1000)
-
-    if not os.path.exists(f"{result_file_dir_path}"): os.mkdir(f"{result_file_dir_path}")
-    if not os.path.exists(f"{result_file_dir_path}/{yscale}"): os.mkdir(f"{result_file_dir_path}/{yscale}")
-    if not os.path.exists(f"{result_file_dir_path}/{yscale}/{mode}"): os.mkdir(f"{result_file_dir_path}/{yscale}/{mode}")
-    if not os.path.exists(f"{result_file_dir_path}/{yscale}/{mode}/{drug}"): os.mkdir(f"{result_file_dir_path}/{yscale}/{mode}/{drug}")
-    plt.savefig(f"{result_file_dir_path}/{yscale}/{mode}/{drug}/{filename}.{file_format}", dpi=dpi)
+    if save_fig:
+        if not os.path.exists(f"{result_file_dir_path}"): os.mkdir(f"{result_file_dir_path}")
+        if not os.path.exists(f"{result_file_dir_path}/{yscale}"): os.mkdir(f"{result_file_dir_path}/{yscale}")
+        if not os.path.exists(f"{result_file_dir_path}/{yscale}/{mode}"): os.mkdir(f"{result_file_dir_path}/{yscale}/{mode}")
+        if not os.path.exists(f"{result_file_dir_path}/{yscale}/{mode}/{drug}"): os.mkdir(f"{result_file_dir_path}/{yscale}/{mode}/{drug}")
+        plt.savefig(f"{result_file_dir_path}/{yscale}/{mode}/{drug}/{filename}.{file_format}", dpi=dpi)
 

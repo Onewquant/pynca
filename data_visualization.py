@@ -34,7 +34,7 @@ for yscale in ['linear','log']:
 
         ## Population
 
-        time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, yscale=yscale)
+        time_to_conc_graph_ckd(gdf=gdf, sid_list=list(gdf['ID'].unique()), drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, yscale=yscale, save_fig=True)
 
         plt.cla()
         plt.clf()
@@ -42,13 +42,13 @@ for yscale in ['linear','log']:
 
         ## Individual
 
-        # for sid in gdf['ID'].unique():
-        #
-        #     time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, yscale=yscale)
-        #
-        #     plt.cla()
-        #     plt.clf()
-        #     plt.close()
+        for sid in gdf['ID'].unique():
+
+            time_to_conc_graph_ckd(gdf=gdf, sid_list=[sid,], drug=drug, hue=hue, result_file_dir_path=result_file_dir_path, hue_order=hue_order, estimator=estimator, yscale=yscale, save_fig=True)
+
+            plt.cla()
+            plt.clf()
+            plt.close()
 ############################
 
 # fig, axes = plt.subplots(nrows=2,ncols=2, figsize=(20, 40))
