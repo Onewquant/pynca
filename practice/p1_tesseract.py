@@ -6,7 +6,7 @@ from PIL import Image
 import pandas as pd
 
 # Load the image from file
-img = Image.open("C:/Users/ilma0/PycharmProjects/pynca/resource/00.png")
+img = Image.open("/resource/00.png")
 
 # Use tesseract to do OCR on the image
 text = pytesseract.image_to_string(img)
