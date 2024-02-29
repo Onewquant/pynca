@@ -8,16 +8,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 group_name = 'SNUH'
+group_name = 'SNUBH'
 
 input_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM'
-df = pd.read_csv(f"{input_dir}/ps_cohort_rsdf81_original.csv")
-gdf = df[['pt_type','Measure_Period','HbA1C_start_value','HbA1C_delta','HbA1C_pct_delta']].copy()
+df = pd.read_csv(f"{input_dir}/{group_name}.csv")
+gdf = df[['pt_type','HbA1C_start_value','HbA1C_delta','HbA1C_pct_delta']].copy()
 gdf['pt_type_new'] = gdf['pt_type'].map({'HIPT': 'Target Cohort', 'NMPT': 'Control Cohort'})
 
 # gdf = df[['pt_type','HbA1C_pct_delta']].copy()
 
 # g_palette='Dark2'
-# g_palette_colors = sns.color_palette('Dark2')
+g_palette_colors = sns.color_palette('Dark2')
 sns.set_style("whitegrid", {'grid.linestyle': ':',
                                 })
 
@@ -31,12 +32,13 @@ sns.set_style("whitegrid", {'grid.linestyle': ':',
 
 # Seaborn boxplot 생성
 plt.figure(figsize=(10, 10))
-sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target Cohort", "Control Cohort"], palette={'Target Cohort': 'darkgrey', 'Control Cohort': 'white'})
-
+# sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target Cohort", "Control Cohort"], palette={'Target Cohort': 'darkgrey', 'Control Cohort': 'white'})
+sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target Cohort", "Control Cohort"], palette={'Target Cohort': g_palette_colors[1], 'Control Cohort': g_palette_colors[0]})
 # x, y축 라벨 및 범위 설정
 plt.xlabel(group_name, fontsize=18, labelpad=5)
 plt.ylabel('HbA1C % Change (%)', fontsize=18)
-plt.ylim(-75, 75)
+# plt.ylim(-75, 75)
+plt.ylim(-55, 75)
 
 # xtick과 ytick의 글자 폰트 사이즈를 18로 설정
 plt.xticks(fontsize=18)
@@ -54,7 +56,8 @@ plt.grid(axis='y', linestyle='--', linewidth=0.3)
 
 # 그래프 표시 (제목 생략)
 # plt.show()
-plt.savefig(f"{input_dir}/{group_name}.png", dpi=600)
+# plt.savefig(f"{input_dir}/{group_name}.png", dpi=600)
+plt.savefig(f"{input_dir}/{group_name}_Poster.png", dpi=600)
 
 plt.cla()
 plt.clf()
@@ -90,3 +93,14 @@ new_image.save(new_image_path)
 # 새 이미지 경로 반환
 new_image_path
 """
+# gdf[gdf['pt_type']=='HIPT']['HbA1C_delta'].median()
+#
+# gdf[gdf['pt_type']=='NMPT']['HbA1C_delta'].median()
+#
+# gdf[gdf['pt_type']=='HIPT']['HbA1C_pct_delta'].median()
+#
+# gdf[gdf['pt_type']=='NMPT']['HbA1C_pct_delta'].median()
+
+# gdf['HbA1C_pct_delta'].min()
+#
+# gdf['HbA1C_pct_delta'].max()
