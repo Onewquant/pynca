@@ -7,17 +7,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+output_mode = 'Paper'
+output_mode = 'Poster_horizontal'
+output_mode = 'Poster_vertical'
+
 group_name = 'SNUH'
 group_name = 'SNUBH'
 
 input_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM'
 df = pd.read_csv(f"{input_dir}/{group_name}.csv")
 gdf = df[['pt_type','HbA1C_start_value','HbA1C_delta','HbA1C_pct_delta']].copy()
-gdf['pt_type_new'] = gdf['pt_type'].map({'HIPT': 'Target Cohort', 'NMPT': 'Control Cohort'})
+# gdf['pt_type_new'] = gdf['pt_type'].map({'HIPT': 'Target Cohort', 'NMPT': 'Control Cohort'})
+gdf['pt_type_new'] = gdf['pt_type'].map({'HIPT': 'Target', 'NMPT': 'Control'})
+gdf = gdf[['pt_type_new','HbA1C_pct_delta']].copy()
 
-# gdf = df[['pt_type','HbA1C_pct_delta']].copy()
-
-# g_palette='Dark2'
+g_palette='Dark2'
 g_palette_colors = sns.color_palette('Dark2')
 sns.set_style("whitegrid", {'grid.linestyle': ':',
                                 })
@@ -31,34 +35,67 @@ sns.set_style("whitegrid", {'grid.linestyle': ':',
 # SNUBH : (-59.03, 66.67)
 
 # Seaborn boxplot 생성
-plt.figure(figsize=(10, 10))
+# plt.figure(figsize=(10, 10))
 # sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target Cohort", "Control Cohort"], palette={'Target Cohort': 'darkgrey', 'Control Cohort': 'white'})
-sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target Cohort", "Control Cohort"], palette={'Target Cohort': g_palette_colors[1], 'Control Cohort': g_palette_colors[0]})
-# x, y축 라벨 및 범위 설정
-plt.xlabel(group_name, fontsize=18, labelpad=5)
-plt.ylabel('HbA1C % Change (%)', fontsize=18)
-# plt.ylim(-75, 75)
-plt.ylim(-55, 75)
+if output_mode == 'Poster_horizontal':
+    plt.figure(figsize=(25, 10))
+    g = sns.boxplot(x='HbA1C_pct_delta', y='pt_type_new', data=gdf, order=["Target", "Control"], palette={'Target': g_palette_colors[1], 'Control': g_palette_colors[0]})
+    plt.xlabel('HbA1C % Change (%)', fontsize=30)
+    plt.ylabel('', fontsize=18, labelpad=20)
 
-# xtick과 ytick의 글자 폰트 사이즈를 18로 설정
-plt.xticks(fontsize=18)
-plt.yticks(fontsize=18)
+    # plt.xlim(-55, 71)
+    plt.xlim(-71, 71)
+
+    # y=0에 대한 대시 스타일 수평선 추가
+    plt.axvline(0, color='black', linestyle='--')
+
+    # 얇은 대시 스타일의 수평 그리드 추가
+    plt.grid(axis='x', linestyle='--', linewidth=0.3)
+
+    # xtick과 ytick의 글자 폰트 사이즈를 18로 설정
+    # plt.xticks(fontsize=18)
+    # plt.yticks(fontsize=18)
+    plt.xticks(fontsize=30)
+    plt.yticks(fontsize=30)
+else:
+    plt.figure(figsize=(15, 10))
+    g = sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target", "Control"], palette={'Target': g_palette_colors[1], 'Control': g_palette_colors[0]})
+
+    # x, y축 라벨 및 범위 설정
+    # plt.xlabel(group_name, fontsize=18, labelpad=5)
+    # plt.ylabel('HbA1C % Change (%)', fontsize=18)
+    plt.xlabel('', fontsize=18, labelpad=5)
+    plt.ylabel('HbA1C % Change (%)', fontsize=30)
+    # plt.ylim(-75, 75)
+    plt.ylim(-52, 71)
+
+    # y=0에 대한 대시 스타일 수평선 추가
+    plt.axhline(0, color='black', linestyle='--')
+
+    # 얇은 대시 스타일의 수평 그리드 추가
+    plt.grid(axis='y', linestyle='--', linewidth=0.3)
+
+
+    # xtick과 ytick의 글자 폰트 사이즈를 18로 설정
+    # plt.xticks(fontsize=18)
+    # plt.yticks(fontsize=18)
+    plt.xticks(fontsize=30)
+    plt.yticks(fontsize=30)
 
 # tight_layout
 plt.tight_layout(pad=3.5)
 
-# y=0에 대한 대시 스타일 수평선 추가
-plt.axhline(0, color='black', linestyle='--')
-
-
-# 얇은 대시 스타일의 수평 그리드 추가
-plt.grid(axis='y', linestyle='--', linewidth=0.3)
+# x축과 y축 선의 두께 설정
+g.spines['top'].set_linewidth(2)
+g.spines['bottom'].set_linewidth(2)
+g.spines['left'].set_linewidth(2)
+g.spines['right'].set_linewidth(2)
 
 # 그래프 표시 (제목 생략)
 # plt.show()
-# plt.savefig(f"{input_dir}/{group_name}.png", dpi=600)
-plt.savefig(f"{input_dir}/{group_name}_Poster.png", dpi=600)
 
+# plt.savefig(f"{input_dir}/{group_name}.png", dpi=600)
+plt.savefig(f"{input_dir}/{group_name}_{output_mode}.png", dpi=600)
 plt.cla()
 plt.clf()
 plt.close()
