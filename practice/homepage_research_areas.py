@@ -52,7 +52,7 @@ plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 
 plt.tight_layout(pad=3.5)
 
-# 그래프 보이기
-# plt.show()
 
 plt.savefig('C:/Users/ilma0/PycharmProjects/pynca/resource/piechart/ResearchAreas_PKPD.png', bbox_inches='tight', dpi=300)
+
+plt.close()

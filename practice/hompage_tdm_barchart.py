@@ -5,8 +5,8 @@ import matplotlib.font_manager as fm
 
 # Load the Excel file
 file_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/piechart'
-file_path = f'{file_dir}/TDM.xlsx'
-chart_path = f'{file_dir}/TDM.png'
+file_path = f'{file_dir}/TDM_barchart.xlsx'
+chart_path = f'{file_dir}/TDM_barchart.png'
 excel_data = pd.ExcelFile(file_path)
 
 # Load the data from the first sheet
@@ -67,6 +67,10 @@ plt.ylabel(None, fontsize=20, labelpad=8)
 plt.xticks(fontsize=18)
 plt.yticks(fontsize=18)
 plt.ylim(0, int(df['TDM'].max()*1.2/100)*100)
+
+# 배경을 투명하게
+fig = plt.gcf()
+fig.patch.set_alpha(0.0)
 
 # Display the plot
 plt.savefig(chart_path)

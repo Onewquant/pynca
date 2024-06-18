@@ -33,19 +33,29 @@ def create_pie_charts(excel_data, output_dir='/mnt/data/'):
         # plt.figure(figsize=(10, 10))
 
         # 파이 차트 그리기
-        fig, ax = plt.subplots(figsize=(10, 10))
-        wedges, texts, autotexts = ax.pie(values, labels=categories, colors=palette, autopct='%1.1f%%', startangle=140)
+        fig, ax = plt.subplots(figsize=(6, 6))
+        wedges, texts, autotexts = ax.pie(values, labels=categories, colors=palette, autopct='%1.1f%%', startangle=140, textprops={'color': 'white'})
 
         # # Equal aspect ratio ensures that pie is drawn as a circle.
         # ax.axis('equal')
+
+
 
         # 파이 차트 안의 텍스트 폰트를 변경
         for text in texts + autotexts:
             text.set_fontproperties(fontprop)
 
+        # 배경을 투명하게
+        fig.patch.set_alpha(0.0)
+
         # plt.pie(values, labels=categories, autopct='%1.1f%%', startangle=140, colors=nation4.colors)
         # plt.pie(values, labels=categories, autopct='%1.1f%%', startangle=140, colors=palette)
         # plt.title(f'Pie Chart for {sheet} Sheet')
+
+        plt.legend(title='', loc='upper right', fontsize='medium', bbox_to_anchor=(1.5, 0.7),
+                   frameon=False, framealpha=0.9, edgecolor='black', facecolor=None,
+                   title_fontsize='13', ncol=1, borderpad=1, labelspacing=0.5, handlelength=2,
+                   handletextpad=0.5)
 
         # Save the pie chart as an image file
         chart_path = f'{output_dir}/TDM_{sheet}.png'

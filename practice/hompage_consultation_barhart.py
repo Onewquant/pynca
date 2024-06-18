@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # 데이터프레임 생성
 file_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/piechart'
 file_path = f'{file_dir}/Consultation_barchart.xlsx'
-chart_path = f'{file_dir}/Concultation_barchart.png'
+chart_path = f'{file_dir}/Consultation_barchart.png'
 excel_data = pd.ExcelFile(file_path)
 
 # Load the data from the first sheet
@@ -44,6 +44,10 @@ plt.grid(True, which='both', linestyle='--', linewidth=0.5, axis='y')
 
 plt.tight_layout(pad=3.5)
 
+# 배경을 투명하게
+fig = plt.gcf()
+fig.patch.set_alpha(0.0)
 
 # 그래프 보이기
 plt.savefig(chart_path, bbox_inches='tight', dpi=300)
+plt.close()
