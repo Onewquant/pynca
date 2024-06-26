@@ -246,5 +246,8 @@ $RECYCLE.BIN/
 
 # By User
 configs/*.json
+*.RData
+*.Rhistory
+*.tiff
 
 # End of https://www.gitignore.io/api/python,pycharm,windows

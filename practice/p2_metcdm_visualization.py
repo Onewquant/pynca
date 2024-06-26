@@ -14,12 +14,16 @@ output_mode = 'Poster_vertical'
 group_name = 'SNUH'
 group_name = 'SNUBH'
 
+outcome_name = 'HbA1c_delta'
+
 input_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM'
 df = pd.read_csv(f"{input_dir}/{group_name}.csv")
 gdf = df[['pt_type','HbA1C_start_value','HbA1C_delta','HbA1C_pct_delta']].copy()
 # gdf['pt_type_new'] = gdf['pt_type'].map({'HIPT': 'Target Cohort', 'NMPT': 'Control Cohort'})
 gdf['pt_type_new'] = gdf['pt_type'].map({'HIPT': 'Target', 'NMPT': 'Control'})
-gdf = gdf[['pt_type_new','HbA1C_pct_delta']].copy()
+# gdf = gdf[['pt_type_new','HbA1C_pct_delta']].copy()
+gdf = gdf[['pt_type_new','HbA1C_delta']].copy()
+gdf.columns = ['pt_type_new',outcome_name]
 
 g_palette='Dark2'
 g_palette_colors = sns.color_palette('Dark2')
@@ -28,23 +32,24 @@ sns.set_style("whitegrid", {'grid.linestyle': ':',
 
 # gdf.iloc[:50].to_csv(f'{input_dir}/example_data.csv', index=False)
 #
-# gdf['HbA1C_pct_delta'].max()
-# gdf['HbA1C_pct_delta'].min()
+# gdf['HbA1C_delta'].max()
+# gdf['HbA1C_delta'].min()
 
-# SNUH : (-50.42, 70.00)
-# SNUBH : (-59.03, 66.67)
+# SNUH : (-8.5, 4.6)
+# SNUBH : (-6.0, 4.2)
 
 # Seaborn boxplot 생성
 # plt.figure(figsize=(10, 10))
 # sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target Cohort", "Control Cohort"], palette={'Target Cohort': 'darkgrey', 'Control Cohort': 'white'})
 if output_mode == 'Poster_horizontal':
     plt.figure(figsize=(25, 10))
-    g = sns.boxplot(x='HbA1C_pct_delta', y='pt_type_new', data=gdf, order=["Target", "Control"], palette={'Target': g_palette_colors[1], 'Control': g_palette_colors[0]})
-    plt.xlabel('HbA1C % Change (%)', fontsize=30)
+    g = sns.boxplot(x=outcome_name, y='pt_type_new', data=gdf, order=["Target", "Control"], palette={'Target': g_palette_colors[1], 'Control': g_palette_colors[0]})
+    plt.xlabel('HbA1C Change (%)', fontsize=30)
     plt.ylabel('', fontsize=18, labelpad=20)
 
     # plt.xlim(-55, 71)
-    plt.xlim(-71, 71)
+    # plt.xlim(-71, 71)
+    plt.xlim(-9, 5)
 
     # y=0에 대한 대시 스타일 수평선 추가
     plt.axvline(0, color='black', linestyle='--')
@@ -59,15 +64,16 @@ if output_mode == 'Poster_horizontal':
     plt.yticks(fontsize=30)
 else:
     plt.figure(figsize=(15, 10))
-    g = sns.boxplot(x='pt_type_new', y='HbA1C_pct_delta', data=gdf, order=["Target", "Control"], palette={'Target': g_palette_colors[1], 'Control': g_palette_colors[0]})
+    g = sns.boxplot(x='pt_type_new', y=outcome_name, data=gdf, order=["Target", "Control"], palette={'Target': g_palette_colors[1], 'Control': g_palette_colors[0]})
 
     # x, y축 라벨 및 범위 설정
     # plt.xlabel(group_name, fontsize=18, labelpad=5)
     # plt.ylabel('HbA1C % Change (%)', fontsize=18)
     plt.xlabel('', fontsize=18, labelpad=5)
-    plt.ylabel('HbA1C % Change (%)', fontsize=30)
+    plt.ylabel('HbA1C Change (%)', fontsize=30)
     # plt.ylim(-75, 75)
-    plt.ylim(-52, 71)
+    # plt.ylim(-52, 71)
+    plt.ylim(-9, 5)
 
     # y=0에 대한 대시 스타일 수평선 추가
     plt.axhline(0, color='black', linestyle='--')
