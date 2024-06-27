@@ -1,6 +1,7 @@
 
 # 필요한 패키지 로드
 library(metafor)
+library(magick)
 
 setwd('C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM')
 
@@ -33,3 +34,12 @@ png("Meta(Efficacy).png", width=2500, height=1500, res=300)
 forest(meta_analysis, slab=paste(meta_data$hospital), cex=1.3)
 
 dev.off()
+
+# 이미지 불러오기
+img <- image_read("Meta(Efficacy).png")
+
+# 이미지 자르기 (위쪽에서 300 픽셀 잘라내기)
+img_cropped <- image_crop(img, geometry_area(width = 2500, height = 1500 - 300, x_off = 0, y_off = 300))
+
+# 자른 이미지 저장
+image_write(img_cropped, path = "Meta(Efficacy)_cropped.png", format = "png")

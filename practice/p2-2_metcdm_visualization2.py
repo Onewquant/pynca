@@ -28,7 +28,7 @@ fig, axes = plt.subplots(1, 2, sharey=True, figsize=(7, 7))
 
 # SNUH 데이터 시각화
 sns.boxplot(x='pt_type_new', y=outcome_name, data=snuh_df, ax=axes[0], order=["Case", "Control"], palette={'Case': g_palette_colors[1], 'Control': g_palette_colors[0]})
-axes[0].set_title('(A) SNUH')
+axes[0].set_title('(A) SNUH',fontsize=13)
 axes[0].axhline(0, color='black', linestyle='--')
 axes[0].tick_params(axis='x', labelsize=13)
 axes[0].tick_params(axis='y', labelsize=13)
@@ -36,7 +36,7 @@ axes[0].tick_params(axis='y', labelsize=13)
 
 # SNUBH 데이터 시각화
 sns.boxplot(x='pt_type_new', y=outcome_name, data=snubh_df, ax=axes[1], order=["Case", "Control"], palette={'Case': g_palette_colors[1], 'Control': g_palette_colors[0]})
-axes[1].set_title('(B) SNUBH')
+axes[1].set_title('(B) SNUBH',fontsize=13)
 axes[1].axhline(0, color='black', linestyle='--')
 axes[1].tick_params(axis='x', labelsize=13)
 

@@ -1,5 +1,6 @@
 # 필요한 패키지 로드
 install.packages("magick")
+
 library(magick)
 library(metafor)
 
