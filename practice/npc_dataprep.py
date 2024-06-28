@@ -25,7 +25,7 @@ result_file_dir_path = 'C:/Users/ilma0/PycharmProjects/pynca/resource/NPC_Practi
 
 drug_prep_df_dict = dict()
 
-for drug in drug_list: break
+for drug in drug_list:
 
     drug_prep_df = list()
 
@@ -35,29 +35,33 @@ for drug in drug_list: break
     result_file_name = f"IMB101_ConcPrep({result_type}).csv"
     result_file_path = f"{result_file_dir_path}/{result_file_name}"
 
+    ## 데이터 기본 전처리
+
     df = pd.read_excel(input_file_path)
     df['Cohort']=df['Subject'].map(lambda x:x.split("-")[0]).copy()
     df = df[df['Cohort']!='C4'].copy()
+    df['NT_Float'] = df['Nominal Time'].map(lambda x:float(x.replace('Pre-Infusion','-1h').replace('End of Infusion','0h').replace('24h','0h').replace('48h','0h').replace('h','')))
+    df['Concentration'] = df['Concentration (ng/mL)'].map(lambda x:x.replace('< 250.00','BLQ') if type(x)==str else x)
 
-    for sn, fdf in df.groupby(by=['Subject']): break
+    for sn, fdf in df.groupby(by=['Subject']):
 
         fdf['ID'] = fdf['Subject'].copy()
         fdf['DOSE'] = fdf['Cohort'].map(drug_dose_dict[drug])
-        fdf['NTIME'] = fdf['Day Nominal'].map(lambda x:(float(x)-1)*24) + fdf['Nominal Time']
-        fdf['ATIME'] = fdf['Actual Time'].map(lambda x: float(x))
+        fdf['NTIME'] = (fdf['Day Nominal'].map(lambda x:(float(x)-1)*24) + fdf['NT_Float'])+1
+        fdf['ATIME'] = fdf['NTIME'].copy()
         fdf['CONC'] = fdf['Concentration'].map(lambda x: float(x) if x not in ('BLQ', 'N.C.') else np.nan)
 
-        if len(fdf[fdf['NTIME'] == 0])==2:
-            period_change_inx = fdf[fdf['NTIME'] == 0].index[-1]
-        elif len(fdf[fdf['NTIME'] == 0])==1:
-            period_change_inx = len(df)+1
-        else:
-            print('NTIME = 0h 인 지점이 아예 없거나 3개 이상 입니다.')
-            raise ValueError
-
-        fdf['PERIOD'] = fdf.apply(lambda row: 1 if float(row.name) < period_change_inx else 2, axis=1)
-
-        fdf['FEEDING'] = fdf.apply(lambda row: f"{row['ID'][0]}{row['PERIOD']}", axis=1).map({'A1':'FED','A2':'FASTED','B1':'FASTED','B2':'FED'})
+        # if len(fdf[fdf['NTIME'] == 0])==2:
+        #     period_change_inx = fdf[fdf['NTIME'] == 0].index[-1]
+        # elif len(fdf[fdf['NTIME'] == 0])==1:
+        #     period_change_inx = len(df)+1
+        # else:
+        #     print('NTIME = 0h 인 지점이 아예 없거나 3개 이상 입니다.')
+        #     raise ValueError
+        #
+        fdf['PERIOD'] = 1
+        fdf['COHORT'] = fdf['Cohort']
+        # fdf['FEEDING'] = fdf.apply(lambda row: f"{row['ID'][0]}{row['PERIOD']}", axis=1).map({'A1':'FED','A2':'FASTED','B1':'FASTED','B2':'FED'})
 
         fdf['DRUG'] = drug
 
@@ -83,9 +87,9 @@ for drug in drug_list: break
 
             if result_type == 'Phoenix':
                 pfdf['CONC'] = pfdf['CONC'].map(lambda x: str(x) if not np.isnan(x) else '.')
-                drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']])
+                drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'DRUG', 'COHORT']])
             elif result_type == 'R':
-                drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'FEEDING', 'DRUG']].dropna())
+                drug_prep_df.append(pfdf[['ID', 'DOSE', 'NTIME', 'ATIME', 'CONC', 'PERIOD', 'DRUG', 'COHORT']].dropna())
 
     drug_prep_df = pd.concat(drug_prep_df, ignore_index=True)
 
