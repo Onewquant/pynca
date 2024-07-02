@@ -16,7 +16,7 @@ group_name = 'SNUBH'
 
 outcome_name = 'HbA1c_delta'
 
-input_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM'
+input_dir = '/resource/MET_CDM'
 df = pd.read_csv(f"{input_dir}/{group_name}.csv")
 gdf = df[['pt_type','HbA1C_start_value','HbA1C_delta','HbA1C_pct_delta']].copy()
 # gdf['pt_type_new'] = gdf['pt_type'].map({'HIPT': 'Target Cohort', 'NMPT': 'Control Cohort'})

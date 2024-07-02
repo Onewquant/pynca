@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 
 # Load the Excel file
-file_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/piechart'
+file_dir = '/resource/piechart'
 file_path = f'{file_dir}/TDM_barchart.xlsx'
 chart_path = f'{file_dir}/TDM_barchart.png'
 excel_data = pd.ExcelFile(file_path)

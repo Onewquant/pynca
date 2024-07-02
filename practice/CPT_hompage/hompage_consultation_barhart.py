@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # 데이터프레임 생성
-file_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/piechart'
+file_dir = '/resource/piechart'
 file_path = f'{file_dir}/Consultation_barchart.xlsx'
 chart_path = f'{file_dir}/Consultation_barchart.png'
 excel_data = pd.ExcelFile(file_path)

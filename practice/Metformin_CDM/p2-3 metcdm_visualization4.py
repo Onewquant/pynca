@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 
 # 이미지 파일 로드
-resource_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM'
+resource_dir = '/resource/MET_CDM'
 img1_path = f'{resource_dir}/Meta(AE).png'
 img2_path = f'{resource_dir}/Meta(Efficacy).png'
 img1 = Image.open(img1_path)

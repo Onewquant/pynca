@@ -5,7 +5,7 @@ import numpy as np
 
 # 예제 데이터 프레임 생성
 
-df = pd.read_csv('C:/Users/ilma0/PycharmProjects/pynca/resource/piechart/ResearchAreas_PKPD.csv')
+df = pd.read_csv('/resource/piechart/ResearchAreas_PKPD.csv')
 # new_df = pd.DataFrame(list(df['NTIME'].unique()), columns=['time'])
 # for inx, frag in df.groupby(by='ID'):
 #     new_df[''] frag[['NTIME','CONC']]

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
 
 # 데이터 파일 로드
-resource_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM'
+resource_dir = '/resource/MET_CDM'
 
 # 이미지 파일 로드
 img1_path = f'{resource_dir}/Meta(AE).png'

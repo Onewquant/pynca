@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 outcome_name='HbA1c_delta'
 
 # 데이터 파일 로드
-resource_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/MET_CDM'
+resource_dir = '/resource/MET_CDM'
 
 snuh_df = pd.read_csv(f'{resource_dir}/SNUH.csv')[['pt_type','HbA1C_start_value','HbA1C_delta','HbA1C_pct_delta']].copy()
 snubh_df = pd.read_csv(f'{resource_dir}/SNUBH.csv')[['pt_type','HbA1C_start_value','HbA1C_delta','HbA1C_pct_delta']].copy()

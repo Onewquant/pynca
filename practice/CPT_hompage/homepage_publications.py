@@ -16,7 +16,7 @@ def create_pie_charts(excel_data, output_dir='/mnt/data/'):
     fontprop = fm.FontProperties(fname=font_path)
 
 
-    sheet_names = {'SIT':palette,'FIH':palette,'Field':palette}
+    sheet_names = {'PKPD':palette,'Year':palette,'IF':palette}
     # 'sequential5blau'
     # 'sequential5petrol'
     # sheet='Sheet3'
@@ -34,7 +34,7 @@ def create_pie_charts(excel_data, output_dir='/mnt/data/'):
 
         # 파이 차트 그리기
         fig, ax = plt.subplots(figsize=(6, 6))
-        wedges, texts, autotexts = ax.pie(values, labels=categories, colors=palette, autopct='%1.1f%%', startangle=140, textprops={'color':'white'}, labeldistance=1.1, pctdistance=0.6)
+        wedges, texts, autotexts = ax.pie(values, labels=categories, colors=palette, autopct='%1.1f%%', startangle=140)
 
         # # Equal aspect ratio ensures that pie is drawn as a circle.
         # ax.axis('equal')
@@ -48,10 +48,11 @@ def create_pie_charts(excel_data, output_dir='/mnt/data/'):
         # plt.title(f'Pie Chart for {sheet} Sheet')
 
         # 배경을 투명하게
+        fig = plt.gcf()
         fig.patch.set_alpha(0.0)
 
         # Save the pie chart as an image file
-        chart_path = f'{output_dir}/Projects_{sheet}.png'
+        chart_path = f'{output_dir}/Publications_{sheet}.png'
         plt.savefig(chart_path, bbox_inches='tight', dpi=300)
         plt.close()
 
@@ -61,7 +62,8 @@ def create_pie_charts(excel_data, output_dir='/mnt/data/'):
 
 
 # Create pie charts for each sheet
-project_dir = 'C:/Users/ilma0/PycharmProjects/pynca/resource/piechart'
-excel_data=f'{project_dir}/Projects.xlsx'
+project_dir = '/resource/piechart'
+excel_data=f'{project_dir}/Publications.xlsx'
 
 chart_paths = create_pie_charts(excel_data=excel_data, output_dir=project_dir)
+
