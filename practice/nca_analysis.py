@@ -5,6 +5,27 @@ from matplotlib.widgets import Cursor
 from scipy.stats import linregress
 
 def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1):
+
+    """
+    concData = df
+    key=["ID","FEEDING"]
+    colTime="ATIME"
+    colConc="CONC"
+    dose=100
+    adm="Extravascular"
+    dur=0
+    doseUnit="mg",
+    timeUnit="h"
+    concUnit="ug/L"
+    down="Log"
+    R2ADJ=0
+    MW=0
+    SS=False
+    iAUC=""
+    excludeDelta=1
+    """
+
+
     concData = pd.DataFrame(concData)
     nKey = len(key)
 
@@ -24,14 +45,14 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
 
     for i in range(nID):
         strHeader = f"{key[0]}={IDs.loc[i, key[0]]}"
-        strCond = f"concData[concData['{key[0]}'] == '{IDs.loc[i, key[0]]}']"
+        cond = (concData[key[0]] == IDs.loc[i, key[0]])
 
         if nKey > 1:
             for j in range(1, nKey):
-                strCond += f" & (concData['{key[j]}'] == '{IDs.loc[i, key[j]]}')"
+                cond &= (concData[key[j]] == IDs.loc[i, key[j]])
                 strHeader += f", {key[j]}={IDs.loc[i, key[j]]}"
 
-        tData = concData.query(strCond)
+        tData = concData[cond]
 
         if not tData.empty:
             tRes = sNCA(tData[colTime], tData[colConc],
@@ -691,11 +712,241 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
     Res["units"] = units.loc[RetNames1, 0].values.tolist() + [units.loc["AUCLST", 0]] * niAUC
     Res["UsedPoints"] = tRes.get("UsedPoints", [])
     return Res
+#
+# def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
+#          timeUnit="h", concUnit="ug/L", iAUC=None, down="Linear",
+#          R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1):
+#
+#
+#     if not (isinstance(x, (list, np.ndarray)) and isinstance(y, (list, np.ndarray)) and isinstance(dose, (int, float)) and isinstance(dur, (int, float)) and isinstance(adm, str) and isinstance(down, str)):
+#         raise ValueError("Check input types!")
+#
+#     if adm.strip().upper() == "INFUSION" and not (dur > 0):
+#         raise ValueError("Infusion mode should have dur larger than 0!")
+#
+#     x = np.array(x)
+#     y = np.array(y)
+#
+#     NApoints = np.isnan(x) | np.isnan(y)
+#     x = x[~NApoints]
+#     y = y[~NApoints]
+#
+#     if not np.all(np.diff(x) >= 0):
+#         raise ValueError("Check if the x is sorted in order!")
+#
+#     n = len(x)
+#     RetNames1 = ["b0", "CMAX", "CMAXD", "TMAX", "TLAG", "CLST",
+#                  "CLSTP", "TLST", "LAMZHL", "LAMZ", "LAMZLL", "LAMZUL",
+#                  "LAMZNPT", "CORRXY", "R2", "R2ADJ", "AUCLST", "AUCALL",
+#                  "AUCIFO", "AUCIFOD", "AUCIFP", "AUCIFPD", "AUCPEO",
+#                  "AUCPEP", "AUMCLST", "AUMCIFO", "AUMCIFP", "AUMCPEO",
+#                  "AUMCPEP"]
+#
+#     if adm.strip().upper() == "BOLUS":
+#         RetNames1.extend(["C0", "AUCPBEO", "AUCPBEP"])
+#
+#     if adm.strip().upper() == "EXTRAVASCULAR":
+#         RetNames1.extend(["VZFO", "VZFP", "CLFO", "CLFP", "MRTEVLST",
+#                           "MRTEVIFO", "MRTEVIFP"])
+#     else:
+#         RetNames1.extend(["VZO", "VZP", "CLO", "CLP", "MRTIVLST",
+#                           "MRTIVIFO", "MRTIVIFP", "VSSO", "VSSP"])
+#
+#     Res = {name: np.nan for name in RetNames1}
+#
+#     if n == 0 or n != len(y) or np.any(y < 0):
+#         Res["LAMZNPT"] = 0
+#         return Res
+#
+#     Units = Unit(doseUnit=doseUnit, timeUnit=timeUnit, concUnit=concUnit, MW=MW)
+#     uY = np.unique(y)
+#
+#     if len(uY) == 1:
+#         Res["CMAX"] = uY[0]
+#         if dose > 0:
+#             Res["CMAXD"] = uY[0] / dose
+#         Res["TMAX"] = x[np.where(y == uY)[0][0]]
+#
+#         if uY[0] == 0:
+#             Res["TLAG"] = np.nan
+#             Res["AUCALL"] = 0
+#         elif np.where(y == uY)[0][0] > 0:
+#             Res["TLAG"] = x[np.where(y == uY)[0][0] - 1]
+#         else:
+#             Res["TLAG"] = 0
+#
+#         Res["CLST"] = np.nan if uY[0] == 0 else uY[0]
+#         Res["TLST"] = np.nan if uY[0] == 0 else x[np.where(y == uY)[0][0]]
+#         Res["LAMZNPT"] = 0
+#         Res["b0"] = uY[0]
+#
+#         if isinstance(iAUC, pd.DataFrame):
+#             niAUC = len(iAUC)
+#             if niAUC > 0:
+#                 RetNames1 = list(set(RetNames1).union(iAUC["Name"]))
+#                 for i in range(niAUC):
+#                     if np.all(y == 0) and np.min(x) <= min(0, iAUC.loc[i, "Start"]) and np.max(x) >= iAUC.loc[i, "End"]:
+#                         Res[iAUC.loc[i, "Name"]] = 0
+#                     elif adm.strip().upper() == "BOLUS":
+#                         if np.sum(x == 0) == 0:
+#                             x2 = np.concatenate(([0], x))
+#                             y2 = np.concatenate(([uY[0]], y))
+#                         Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res,
+#                                                           down=down)
+#                     else:
+#                         Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res,
+#                                                           down=down)
+#                     Units = Units.append(Units.loc["AUCLST", :], ignore_index=True)
+#                     Units.index = list(Units.index[:-1]) + [iAUC.loc[i, "Name"]]
+#         else:
+#             niAUC = 0
+#
+#         for key in Res.keys():
+#             Res[key] *= Units.loc[key, 1]
+#
+#         Res["units"] = list(Units.loc[RetNames1, 0]) + [Units.loc["AUCLST", 0]] * niAUC
+#         return Res
+#
+#     iLastNonZero = np.max(np.where(y > 0))
+#     x0 = x[:iLastNonZero + 1]
+#     y0 = y[:iLastNonZero + 1]
+#     x1 = x0[y0 != 0]
+#     y1 = y0[y0 != 0]
+#
+#     if adm.strip().upper() == "BOLUS":
+#         if y[0] > y[1] and y[1] > 0:
+#             C0 = np.exp(-x[0] * (np.log(y[1]) - np.log(y[0])) / (x[1] - x[0]) + np.log(y[0]))
+#         else:
+#             C0 = y[np.where(x == np.min(x[y > 0]))[0][0]]
+#         x2 = np.concatenate(([0], x))
+#         y2 = np.concatenate(([C0], y))
+#         x3 = np.concatenate(([0], x0))
+#         y3 = np.concatenate(([C0], y0))
+#     else:
+#         if not np.any(x == 0):
+#             x2 = np.concatenate(([0], x))
+#             y2 = np.concatenate(([0], y))
+#             x3 = np.concatenate(([0], x0))
+#             y3 = np.concatenate(([0], y0))
+#         else:
+#             x2 = x
+#             y2 = y
+#             x3 = x0
+#             y3 = y0
+#
+#     tRes = BestSlope(x, y, adm, excludeDelta=excludeDelta)
+#
+#     if R2ADJ > 0:
+#         if tRes["LAMZNPT"] < 2:
+#             tRes = DetSlope(x1, y1, Keystring)
+#         elif tRes["R2ADJ"] < R2ADJ:
+#             tRes = DetSlope(x1, y1, Keystring, sel1=np.where(x1 == tRes["LAMZLL"])[0], sel2=np.where(x1 == tRes["LAMZUL"])[0])
+#
+#     tRes["UsedPoints"] = tRes.get("UsedPoints", 0) + np.where(x == tRes["LAMZLL"])[0][0] - \
+#                           np.where(x1 == tRes["LAMZLL"])[0][0]
+#     for key in ["R2", "R2ADJ", "LAMZNPT", "LAMZ", "b0", "CORRXY", "LAMZLL", "LAMZUL", "CLSTP"]:
+#         Res[key] = tRes[key]
+#
+#     tab_auc = AUC(x3, y3, down)
+#     Res["AUCLST"], Res["AUMCLST"] = tab_auc[-1]
+#     Res["AUCALL"] = AUC(x2, y2, down)[-1, 0]
+#     Res["LAMZHL"] = np.log(2) / Res["LAMZ"]
+#     Res["TMAX"] = x[np.argmax(y)]
+#     Res["CMAX"] = np.max(y)
+#     Res["TLST"] = x[iLastNonZero]
+#     Res["CLST"] = y[iLastNonZero]
+#     Res["AUCIFO"] = Res["AUCLST"] + Res["CLST"] / Res["LAMZ"]
+#     Res["AUCIFP"] = Res["AUCLST"] + Res["CLSTP"] / Res["LAMZ"]
+#     Res["AUCPEO"] = (1 - Res["AUCLST"] / Res["AUCIFO"]) * 100
+#     Res["AUCPEP"] = (1 - Res["AUCLST"] / Res["AUCIFP"]) * 100
+#     Res["AUMCIFO"] = Res["AUMCLST"] + Res["CLST"] * Res["TLST"] / Res["LAMZ"] + Res["CLST"] / Res["LAMZ"] ** 2
+#     Res["AUMCIFP"] = Res["AUMCLST"] + Res["CLSTP"] * Res["TLST"] / Res["LAMZ"] + Res["CLSTP"] / Res["LAMZ"] ** 2
+#     Res["AUMCPEO"] = (1 - Res["AUMCLST"] / Res["AUMCIFO"]) * 100
+#     Res["AUMCPEP"] = (1 - Res["AUMCLST"] / Res["AUMCIFP"]) * 100
+#
+#     if not np.isnan(dose) and dose > 0:
+#         Res["CMAXD"] = Res["CMAX"] / dose
+#         Res["AUCIFOD"] = Res["AUCIFO"] / dose
+#         Res["AUCIFPD"] = Res["AUCIFP"] / dose
+#
+#     if adm.strip().upper() == "BOLUS":
+#         Res["C0"] = C0
+#         Res["AUCPBEO"] = tab_auc[1, 0] / Res["AUCIFO"] * 100
+#         Res["AUCPBEP"] = tab_auc[1, 0] / Res["AUCIFP"] * 100
+#     else:
+#         if np.sum(y0 == 0) > 0:
+#             Res["TLAG"] = x0[np.max(np.where(y0 == 0))]
+#         else:
+#             Res["TLAG"] = 0
+#         if not np.isnan(x0[np.where(x0 == 0)][0]):
+#             if y0[np.where(x0 == 0)] > 0:
+#                 Res["TLAG"] = 0
+#
+#     if adm.strip().upper() == "EXTRAVASCULAR":
+#         if SS:
+#             Res["VZFO"] = dose / Res["AUCLST"] / Res["LAMZ"]
+#             Res["VZFP"] = np.nan
+#             Res["CLFO"] = dose / Res["AUCLST"]
+#             Res["CLFP"] = np.nan
+#             Res["MRTEVLST"] = Res["AUMCLST"] / Res["AUCLST"]
+#             Res["MRTEVIFO"] = np.nan
+#             Res["MRTEVIFP"] = np.nan
+#         else:
+#             Res["VZFO"] = dose / Res["AUCIFO"] / Res["LAMZ"]
+#             Res["VZFP"] = dose / Res["AUCIFP"] / Res["LAMZ"]
+#             Res["CLFO"] = dose / Res["AUCIFO"]
+#             Res["CLFP"] = dose / Res["AUCIFP"]
+#             Res["MRTEVLST"] = Res["AUMCLST"] / Res["AUCLST"]
+#             Res["MRTEVIFO"] = Res["AUMCIFO"] / Res["AUCIFO"]
+#             Res["MRTEVIFP"] = Res["AUMCIFP"] / Res["AUCIFP"]
+#     else:
+#         if SS:
+#             Res["VZO"] = dose / Res["AUCLST"] / Res["LAMZ"]
+#             Res["VZP"] = np.nan
+#             Res["CLO"] = dose / Res["AUCLST"]
+#             Res["CLP"] = np.nan
+#             Res["MRTIVLST"] = Res["AUMCLST"] / Res["AUCLST"] - dur / 2
+#             Res["MRTIVIFO"] = np.nan
+#             Res["MRTIVIFP"] = np.nan
+#             Res["VSSO"] = Res["MRTIVLST"] * Res["CLO"]
+#             Res["VSSP"] = np.nan
+#         else:
+#             Res["VZO"] = dose / Res["AUCIFO"] / Res["LAMZ"]
+#             Res["VZP"] = dose / Res["AUCIFP"] / Res["LAMZ"]
+#             Res["CLO"] = dose / Res["AUCIFO"]
+#             Res["CLP"] = dose / Res["AUCIFP"]
+#             Res["MRTIVLST"] = Res["AUMCLST"] / Res["AUCLST"] - dur / 2
+#             Res["MRTIVIFO"] = Res["AUMCIFO"] / Res["AUCIFO"] - dur / 2
+#             Res["MRTIVIFP"] = Res["AUMCIFP"] / Res["AUCIFP"] - dur / 2
+#             Res["VSSO"] = Res["MRTIVIFO"] * Res["CLO"]
+#             Res["VSSP"] = Res["MRTIVIFP"] * Res["CLP"]
+#
+#     if isinstance(iAUC, pd.DataFrame):
+#         niAUC = len(iAUC)
+#         if niAUC > 0:
+#             ret_names1 = list(set(RetNames1).union(iAUC["Name"]))
+#             for i in range(niAUC):
+#                 if adm.strip().upper() == "BOLUS":
+#                     Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
+#                 else:
+#                     Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
+#                 units = units.append(units.loc["AUCLST", :], ignore_index=True)
+#                 units.index = list(units.index[:-1]) + [iAUC.loc[i, "Name"]]
+#     else:
+#         niAUC = 0
+#
+#     for key in Res.keys():
+#         Res[key] *= units.loc[key, 1]
+#
+#     Res["units"] = units.loc[RetNames1, 0].values.tolist() + [units.loc["AUCLST", 0]] * niAUC
+#     Res["UsedPoints"] = tRes.get("UsedPoints", [])
+#     return Res
 
 
-df=pd.read_csv('C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK_analysis/CKD379_ConcPrep_Sitagliptin(R).csv')
+df=pd.read_csv('./resource/CKD379-FDI/PK_analysis/CKD379_ConcPrep_Sitagliptin(R).csv')
 
 tblNCA(df, key=["ID","FEEDING"], colTime="ATIME", colConc="CONC",
              dose=100, adm="Extravascular", dur=0, doseUnit="mg",
              timeUnit="h", concUnit="ug/L", down="Log", R2ADJ=0,
              MW=0, SS=False, iAUC="", excludeDelta=1)
+
