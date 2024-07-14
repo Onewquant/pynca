@@ -249,9 +249,21 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
         columns = list(r0.keys())
 
         for i in range(loc_start, loc_last - 1):
-            slope, intercept, r_value, p_value, std_err = linregress(x[i:loc_last], np.log(y[i:loc_last]))
-            tmp_mat[i - loc_start, :8] = [r_value ** 2, r_value ** 2 - (1 - (1 - r_value ** 2) * (n - 1) / (n - 2)),
-                                          loc_last - i, -slope, intercept, r_value, x[i], x[loc_last - 1]]
+            i=9
+
+            slope, intercept, r_value, p_value, std_err = linregress(x[i:], np.log(y[i:loc_last+1]))
+
+            mx = np.mean(x)
+            my = np.mean(y)
+            Sxx = sum((x - mx) * (x - mx))
+            Sxy = sum((x - mx) * (y - my))
+            Syy = sum((y - my) * (y - my))
+            b1 = Sxy / Sxx
+            r_squared = b1 * Sxy / Syy
+            r2adj = 1 - (1 - r_squared) * (n - 1)/(n - 2)
+
+            tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_squared) * (n - 1) / (n - 2)),  #########################################
+                                          loc_last-i+1, -slope, intercept, r_value, x[i], x[loc_last]] #########################################
 
         tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2), :]
 
