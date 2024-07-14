@@ -5,6 +5,13 @@ from matplotlib.widgets import Cursor
 from scipy.stats import linregress
 
 def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1):
+
+    """
+    concData, key, colTime, colConc, dose, adm, dur, doseUnit = df, ["ID", "FEEDING"], "ATIME", "CONC", 100, "Extravascular", 0, "mg"
+    timeUnit, concUnit, down, R2ADJ = "h", "ug/L", "Log", 0
+    MW, SS, iAUC, excludeDelta = 0, False, "", 1
+    """
+
     concData = pd.DataFrame(concData)
     nKey = len(key)
 
@@ -22,6 +29,9 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
 
     Res = []
 
+    # 군별 NCA 시행
+
+    # for i in range(nID): break
     for i in range(nID):
         strHeader = f"{key[0]}={IDs.loc[i, key[0]]}"
         cond = (concData[key[0]] == IDs.loc[i, key[0]])
@@ -34,6 +44,9 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
         tData = concData[cond]
 
         if not tData.empty:
+
+            # individual subject에서 NCA 시행
+
             tRes = sNCA(tData[colTime].values, tData[colConc].values,
                         dose=dose[i], adm=adm, dur=dur, doseUnit=doseUnit,
                         timeUnit=timeUnit, concUnit=concUnit, R2ADJ=R2ADJ,
@@ -199,107 +212,109 @@ def slope(x, y):
     return result
 
 
-def BestSlope(x, y, adm="Extravascular", TOL=1e-4, excludeDelta=1):
-    result = {"R2": np.nan, "R2ADJ": np.nan, "LAMZNPT": 0, "LAMZ": np.nan,
-              "b0": np.nan, "CORRXY": np.nan, "LAMZLL": np.nan, "LAMZUL": np.nan, "CLSTP": np.nan}
+def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
+    # x, y, adm, TOL, excludeDelta =x, y, adm, 1e-04, excludeDelta
 
+    result = {
+        'R2': np.nan, 'R2ADJ': np.nan, 'LAMZNPT': 0, 'LAMZ': np.nan,
+        'b0': np.nan, 'CORRXY': np.nan, 'LAMZLL': np.nan, 'LAMZUL': np.nan, 'CLSTP': np.nan
+    }
     if excludeDelta < 0:
         raise ValueError("Option excludeDelta should be non-negative!")
 
     n = len(x)
-    if n == 0 or n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype,
-                                                                                           np.number) or np.any(y < 0):
-        result["LAMZNPT"] = 0
+    if n == 0 or n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype, np.number) or np.any(y < 0):
+        result['LAMZNPT'] = 0
         return result
 
     if len(np.unique(y)) == 1:
-        result["LAMZNPT"] = 0
-        result["b0"] = np.unique(y)[0]
+        result['LAMZNPT'] = 0
+        result['b0'] = np.unique(y)[0]
         return result
 
+    # (Cmax 의 index 위치, Conc이 0이 아닌 끝나는 지점 index 위치) 찾기
+
     r0 = result.copy()
-
-    if adm.strip().upper() == "BOLUS":
-        loc_start = np.argmax(y)
-    else:
-        loc_start = np.argmax(y) + 1
-
-    loc_last = np.max(np.where(y > 0))
+    loc_start = np.argmax(y) if adm.upper().strip() == "BOLUS" else np.argmax(y) + 1
+    loc_last = np.max(np.where(y > 0)[0])
 
     if np.isnan(loc_start) or np.isnan(loc_last):
-        result["LAMZNPT"] = 0
+        result['LAMZNPT'] = 0
         return result
 
     if loc_last - loc_start < 2:
-        r0["LAMZNPT"] = 0
+        r0['LAMZNPT'] = 0
     else:
         tmp_mat = np.full((loc_last - loc_start - 1, len(r0)), np.nan)
-        for i in range(loc_start, loc_last - 1):
-            tmp_mat[i - loc_start, :8] = slope(x[i:loc_last + 1], np.log(y[i:loc_last + 1]))
+        columns = list(r0.keys())
 
-        tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2)]
+        for i in range(loc_start, loc_last - 1):
+            slope, intercept, r_value, p_value, std_err = linregress(x[i:loc_last], np.log(y[i:loc_last]))
+            tmp_mat[i - loc_start, :8] = [r_value ** 2, r_value ** 2 - (1 - (1 - r_value ** 2) * (n - 1) / (n - 2)),
+                                          loc_last - i, -slope, intercept, r_value, x[i], x[loc_last - 1]]
+
+        tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2), :]
 
         if tmp_mat.shape[0] > 0:
             max_adj_rsq = np.max(tmp_mat[:, 1])
-            OKs = np.abs(max_adj_rsq - tmp_mat[:, 1]) < TOL
-            n_max = np.max(tmp_mat[OKs, 2])
-            r0 = tmp_mat[OKs & (tmp_mat[:, 2] == n_max)][0]
-            r0["CLSTP"] = np.exp(r0[4] - r0[3] * np.max(x[np.isfinite(y)]))
+            oks = np.abs(max_adj_rsq - tmp_mat[:, 1]) < TOL
+            n_max = np.max(tmp_mat[oks, 2])
+            r0 = tmp_mat[oks & (tmp_mat[:, 2] == n_max), :][0]
+            r0[8] = np.exp(r0[4] - r0[3] * np.max(x[np.isfinite(y)]))
         else:
-            r0["LAMZNPT"] = 0
+            r0['LAMZNPT'] = 0
 
     if excludeDelta < 1:
         x1 = x[:-1]
         y1 = y[:-1]
         r1 = result.copy()
-
-        if adm.strip().upper() == "BOLUS":
-            loc_start = np.argmax(y1)
-        else:
-            loc_start = np.argmax(y1) + 1
-
-        loc_last = np.max(np.where(y1 > 0))
+        loc_start = np.argmax(y1) if adm.upper().strip() == "BOLUS" else np.argmax(y1) + 1
+        loc_last = np.max(np.where(y1 > 0)[0])
 
         if loc_last - loc_start < 2:
-            r1["LAMZNPT"] = 0
+            r1['LAMZNPT'] = 0
         else:
             tmp_mat = np.full((loc_last - loc_start - 1, len(r1)), np.nan)
-            for i in range(loc_start, loc_last - 1):
-                tmp_mat[i - loc_start, :8] = slope(x1[i:loc_last + 1], np.log(y1[i:loc_last + 1]))
 
-            tmp_mat = tmp_mat[tmp_mat[:, 2] > 2]
+            for i in range(loc_start, loc_last - 1):
+                slope, intercept, r_value, p_value, std_err = linregress(x1[i:loc_last], np.log(y1[i:loc_last]))
+                tmp_mat[i - loc_start, :8] = [r_value ** 2, r_value ** 2 - (1 - (1 - r_value ** 2) * (n - 1) / (n - 2)),
+                                              loc_last - i, -slope, intercept, r_value, x1[i], x1[loc_last - 1]]
+
+            tmp_mat = tmp_mat[tmp_mat[:, 2] > 2, :]
 
             if tmp_mat.shape[0] > 0:
                 max_adj_rsq = np.max(tmp_mat[:, 1])
-                OKs = np.abs(max_adj_rsq - tmp_mat[:, 1]) < TOL
-                n_max = np.max(tmp_mat[OKs, 2])
-                r1 = tmp_mat[OKs & (tmp_mat[:, 2] == n_max)][0]
-                r1["CLSTP"] = np.exp(r1[4] - r1[3] * np.max(x[np.isfinite(y)]))
+                oks = np.abs(max_adj_rsq - tmp_mat[:, 1]) < TOL
+                n_max = np.max(tmp_mat[oks, 2])
+                r1 = tmp_mat[oks & (tmp_mat[:, 2] == n_max), :][0]
+                r1[8] = np.exp(r1[4] - r1[3] * np.max(x[np.isfinite(y)]))
             else:
-                r1["LAMZNPT"] = 0
+                r1['LAMZNPT'] = 0
 
-        if np.isnan(r1["R2ADJ"]):
+        if np.isnan(r1[1]):
             result = r0
-        elif np.isnan(r0["R2ADJ"]):
+        elif np.isnan(r0[1]):
             result = r1
-        elif r1["R2ADJ"] - r0["R2ADJ"] > excludeDelta:
+        elif r1[1] - r0[1] > excludeDelta:
             result = r1
         else:
             result = r0
     else:
         result = r0
 
-    if result["LAMZNPT"] > 0:
-        result["UsedPoints"] = list(
-            range(np.where(x == result["LAMZLL"])[0][0], np.where(x == result["LAMZUL"])[0][0] + 1))
+    if type(result)==dict: result = result.values()
+
+    result = dict(zip(columns, list(result)))
+    if result['LAMZNPT'] > 0:
+        result['UsedPoints'] = list(range(int(result['LAMZLL']), int(result['LAMZUL']) + 1))
     else:
-        result["UsedPoints"] = None
+        result['UsedPoints'] = None
 
     return result
 
 
-
-def DetSlope(x, y, SubTitle="", sel_1=0, sel_2=0):
+def DetSlope(x, y, SubTitle="", sel1=0, sel2=0):
     def onpick(event):
         ind = event.ind[0]
         if not selected[ind]:
@@ -462,13 +477,12 @@ def IntAUC(x, y, t1, t2, Res, down="Linear"):
     return result
 
 
-def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
-         timeUnit="h", concUnit="ug/L", iAUC=None, down="Linear",
-         R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1):
-    #
-    # x= tData[colTime].values
-    # y = tData[colConc].values
-    # dose = dose[i]
+def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", iAUC=None, down="Linear", R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1):
+
+    """
+    x, y, dose, adm, dur, doseUnit, timeUnit, concUnit = tData[colTime].values, tData[colConc].values, dose[i], adm, dur, doseUnit, timeUnit, concUnit
+    R2ADJ, down, MW, SS, iAUC, Keystring, excludeDelta = R2ADJ, down, MW, SS, iAUC, strHeader, excludeDelta
+    """
 
     if not (isinstance(x, (list, np.ndarray)) and isinstance(y, (list, np.ndarray)) and
             isinstance(dose, (int, float)) and isinstance(dur, (int, float)) and
@@ -515,6 +529,8 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
     Units = Unit(doseUnit=doseUnit, timeUnit=timeUnit, concUnit=concUnit, MW=MW)
     uY = np.unique(y)
 
+    # unique한 conc 값이 1개만있을때 (==Cmax)
+
     if len(uY) == 1:
         Res["CMAX"] = uY[0]
         if dose > 0:
@@ -555,11 +571,13 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
         else:
             niAUC = 0
 
-        for key in Res.keys():
-            Res[key] *= Units.loc[key, 1]
+        for k in Res.keys():
+            Res[k] *= Units.loc[k, 1]
 
         Res["units"] = list(Units.loc[RetNames1, 0]) + [Units.loc["AUCLST", 0]] * niAUC
         return Res
+
+    # unique한 y값이 1개 이상일때
 
     iLastNonZero = np.max(np.where(y > 0))
     x0 = x[:iLastNonZero + 1]
@@ -588,7 +606,11 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
             x3 = x0
             y3 = y0
 
+    # Slope 찾기 (Best Fit)
+
     tRes = BestSlope(x, y, adm, excludeDelta=excludeDelta)
+
+    # Slope 찾기 (Pick the slope)
 
     if R2ADJ > 0:
         if tRes["LAMZNPT"] < 2:
@@ -596,14 +618,15 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
         elif tRes["R2ADJ"] < R2ADJ:
             tRes = DetSlope(x1, y1, Keystring, sel1=np.where(x1 == tRes["LAMZLL"])[0], sel2=np.where(x1 == tRes["LAMZUL"])[0])
 
-    tRes["UsedPoints"] = tRes.get("UsedPoints", 0) + np.where(x == tRes["LAMZLL"])[0][0] - \
-                          np.where(x1 == tRes["LAMZLL"])[0][0]
+    # Slope 찾기 (Pick the slope)
+
+    tRes["UsedPoints"] = tRes.get("UsedPoints", 0) + np.where(x == tRes["LAMZLL"])[0][0] - np.where(x1 == tRes["LAMZLL"])[0][0]
     for key in ["R2", "R2ADJ", "LAMZNPT", "LAMZ", "b0", "CORRXY", "LAMZLL", "LAMZUL", "CLSTP"]:
         Res[key] = tRes[key]
 
     tab_auc = AUC(x3, y3, down)
-    Res["AUCLST"], Res["AUMCLST"] = tab_auc[-1]
-    Res["AUCALL"] = AUC(x2, y2, down)[-1, 0]
+    Res["AUCLST"], Res["AUMCLST"] = tab_auc['AUC'][-1],tab_auc['AUMC'][-1]
+    Res["AUCALL"] = AUC(x2, y2, down)['AUC'][-1]
     Res["LAMZHL"] = np.log(2) / Res["LAMZ"]
     Res["TMAX"] = x[np.argmax(y)]
     Res["CMAX"] = np.max(y)
@@ -625,8 +648,10 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
 
     if adm.strip().upper() == "BOLUS":
         Res["C0"] = C0
-        Res["AUCPBEO"] = tab_auc[1, 0] / Res["AUCIFO"] * 100
-        Res["AUCPBEP"] = tab_auc[1, 0] / Res["AUCIFP"] * 100
+        # Res["AUCPBEO"] = tab_auc[1, 0] / Res["AUCIFO"] * 100
+        # Res["AUCPBEP"] = tab_auc[1, 0] / Res["AUCIFP"] * 100
+        Res["AUCPBEO"] = tab_auc['AUC'][-1] / Res["AUCIFO"] * 100
+        Res["AUCPBEP"] = tab_auc['AUC'][-1] / Res["AUCIFP"] * 100
     else:
         if np.sum(y0 == 0) > 0:
             Res["TLAG"] = x0[np.max(np.where(y0 == 0))]
@@ -678,21 +703,22 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg",
     if isinstance(iAUC, pd.DataFrame):
         niAUC = len(iAUC)
         if niAUC > 0:
-            ret_names1 = list(set(RetNames1).union(iAUC["Name"]))
+            RetNames1 = list(set(RetNames1).union(iAUC["Name"]))
             for i in range(niAUC):
                 if adm.strip().upper() == "BOLUS":
                     Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
                 else:
                     Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
-                units = units.append(units.loc["AUCLST", :], ignore_index=True)
-                units.index = list(units.index[:-1]) + [iAUC.loc[i, "Name"]]
+                Units = Units.append(Units.loc["AUCLST", :], ignore_index=True)
+                Units.index = list(Units.index[:-1]) + [iAUC.loc[i, "Name"]]
     else:
         niAUC = 0
 
     for key in Res.keys():
-        Res[key] *= units.loc[key, 1]
+        Res[key] *= Units.loc[key, 'Factor']
+        # Units.loc[key]
 
-    Res["units"] = units.loc[RetNames1, 0].values.tolist() + [units.loc["AUCLST", 0]] * niAUC
+    Res["units"] = Units.loc[RetNames1, 'Unit'].values.tolist() + [Units.loc["AUCLST", 'Unit']] * niAUC
     Res["UsedPoints"] = tRes.get("UsedPoints", [])
     return Res
 
@@ -704,3 +730,15 @@ result = tblNCA(df, key=["ID", "FEEDING"], colTime="ATIME", colConc="CONC",
                 MW=0, SS=False, iAUC="", excludeDelta=1)
 
 print(result)
+
+"""
+concData, key, colTime, colConc, dose, adm, dur, doseUnit = df, ["ID", "FEEDING"], "ATIME", "CONC", 100, "Extravascular", 0, "mg"
+timeUnit, concUnit, down, R2ADJ = "h", "ug/L", "Log", 0
+MW, SS, iAUC, excludeDelta = 0, False, "", 1
+
+tData=pd.DataFrame(columns=[colTime, colConc])
+
+strHeader=''
+x, y, dose, adm, dur, doseUnit, timeUnit, concUnit = tData[colTime].values, tData[colConc].values, dose, adm, dur, doseUnit, timeUnit, concUnit
+R2ADJ, down, MW, SS, iAUC, Keystring, excludeDelta = R2ADJ, down, MW, SS, iAUC, strHeader, excludeDelta
+"""
