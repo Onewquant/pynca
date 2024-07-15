@@ -32,6 +32,8 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
     # 군별 NCA 시행
 
     # for i in range(nID): break
+    # i = 8
+
     for i in range(nID):
         strHeader = f"{key[0]}={IDs.loc[i, key[0]]}"
         cond = (concData[key[0]] == IDs.loc[i, key[0]])
@@ -53,7 +55,10 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
                         down=down, MW=MW, SS=SS, iAUC=iAUC,
                         Keystring=strHeader, excludeDelta=excludeDelta)
             Res.append(tRes)
-
+        # if i==0: print(f'({0}) ', tRes.keys())
+        # print(f'({i}) ', tRes.values())
+        # print(f'({i}) ', tRes)
+        # print(f'({i}) ',tRes['UsedPoints'])
     Res = pd.concat(Res, ignore_index=True)
     Res = pd.concat([IDs, Res], axis=1)
 
@@ -246,24 +251,16 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
         r0['LAMZNPT'] = 0
     else:
         tmp_mat = np.full((loc_last - loc_start - 1, len(r0)), np.nan)
-        columns = list(r0.keys())
+        res_columns = list(r0.keys())
 
         for i in range(loc_start, loc_last - 1):
-            i=9
-
+            # i=10
+            # i=11
             slope, intercept, r_value, p_value, std_err = linregress(x[i:], np.log(y[i:loc_last+1]))
+            n_reg = len(x[i:])
 
-            mx = np.mean(x)
-            my = np.mean(y)
-            Sxx = sum((x - mx) * (x - mx))
-            Sxy = sum((x - mx) * (y - my))
-            Syy = sum((y - my) * (y - my))
-            b1 = Sxy / Sxx
-            r_squared = b1 * Sxy / Syy
-            r2adj = 1 - (1 - r_squared) * (n - 1)/(n - 2)
-
-            tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_squared) * (n - 1) / (n - 2)),  #########################################
-                                          loc_last-i+1, -slope, intercept, r_value, x[i], x[loc_last]] #########################################
+            tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_value ** 2) * (n_reg - 1) / (n_reg - 2)),  #########################################
+                                          loc_last-i+1, -slope, intercept, r_value, x[i], x[loc_last]] ##### used points ###########################
 
         tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2), :]
 
@@ -289,8 +286,10 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             tmp_mat = np.full((loc_last - loc_start - 1, len(r1)), np.nan)
 
             for i in range(loc_start, loc_last - 1):
+                # i=9
                 slope, intercept, r_value, p_value, std_err = linregress(x1[i:loc_last], np.log(y1[i:loc_last]))
-                tmp_mat[i - loc_start, :8] = [r_value ** 2, r_value ** 2 - (1 - (1 - r_value ** 2) * (n - 1) / (n - 2)),
+                n_reg = len(x1[i:loc_last])
+                tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_value ** 2) * (n_reg - 1) / (n_reg - 2)),
                                               loc_last - i, -slope, intercept, r_value, x1[i], x1[loc_last - 1]]
 
             tmp_mat = tmp_mat[tmp_mat[:, 2] > 2, :]
@@ -315,11 +314,11 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
     else:
         result = r0
 
-    if type(result)==dict: result = result.values()
+    # if type(result)==dict: result = result.values()
 
-    result = dict(zip(columns, list(result)))
+    result = dict(zip(res_columns, list(result)))
     if result['LAMZNPT'] > 0:
-        result['UsedPoints'] = list(range(int(result['LAMZLL']), int(result['LAMZUL']) + 1))
+        result['UsedPoints'] = list(range(np.where(x==result['LAMZLL'])[0][0], np.where(x==result['LAMZUL'])[0][0] + 1))
     else:
         result['UsedPoints'] = None
 
@@ -492,7 +491,7 @@ def IntAUC(x, y, t1, t2, Res, down="Linear"):
 def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", iAUC=None, down="Linear", R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1):
 
     """
-    x, y, dose, adm, dur, doseUnit, timeUnit, concUnit = tData[colTime].values, tData[colConc].values, dose[i], adm, dur, doseUnit, timeUnit, concUnit
+    x, y, adm, dur, doseUnit, timeUnit, concUnit = tData[colTime].values, tData[colConc].values, adm, dur, doseUnit, timeUnit, concUnit
     R2ADJ, down, MW, SS, iAUC, Keystring, excludeDelta = R2ADJ, down, MW, SS, iAUC, strHeader, excludeDelta
     """
 
