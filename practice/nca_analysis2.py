@@ -218,7 +218,7 @@ def slope(x, y):
 
 
 def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
-    # x, y, adm, TOL, excludeDelta =x, y, adm, 1e-04, excludeDelta
+    # x, y, adm, TOL, excludeDelta = x1, y1, adm, 1e-04, excludeDelta
 
     result = {
         'R2': np.nan, 'R2ADJ': np.nan, 'LAMZNPT': 0, 'LAMZ': np.nan,
@@ -270,6 +270,7 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             n_max = np.max(tmp_mat[oks, 2])
             r0 = tmp_mat[oks & (tmp_mat[:, 2] == n_max), :][0]
             r0[8] = np.exp(r0[4] - r0[3] * np.max(x[np.isfinite(y)]))
+            r0=dict(zip(res_columns, list(r0)))
         else:
             r0['LAMZNPT'] = 0
 
@@ -284,6 +285,7 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             r1['LAMZNPT'] = 0
         else:
             tmp_mat = np.full((loc_last - loc_start - 1, len(r1)), np.nan)
+            res_columns = list(r1.keys())
 
             for i in range(loc_start, loc_last - 1):
                 # i=9
@@ -300,6 +302,7 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
                 n_max = np.max(tmp_mat[oks, 2])
                 r1 = tmp_mat[oks & (tmp_mat[:, 2] == n_max), :][0]
                 r1[8] = np.exp(r1[4] - r1[3] * np.max(x[np.isfinite(y)]))
+                r1 = dict(zip(res_columns, list(r1)))
             else:
                 r1['LAMZNPT'] = 0
 
@@ -316,7 +319,7 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
 
     # if type(result)==dict: result = result.values()
 
-    result = dict(zip(res_columns, list(result)))
+    # result = dict(zip(res_columns, list(result)))
     if result['LAMZNPT'] > 0:
         result['UsedPoints'] = list(range(np.where(x==result['LAMZLL'])[0][0], np.where(x==result['LAMZUL'])[0][0] + 1))
     else:
@@ -493,6 +496,7 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", 
     """
     x, y, adm, dur, doseUnit, timeUnit, concUnit = tData[colTime].values, tData[colConc].values, adm, dur, doseUnit, timeUnit, concUnit
     R2ADJ, down, MW, SS, iAUC, Keystring, excludeDelta = R2ADJ, down, MW, SS, iAUC, strHeader, excludeDelta
+    dose = dose[0]
     """
 
     if not (isinstance(x, (list, np.ndarray)) and isinstance(y, (list, np.ndarray)) and
@@ -619,7 +623,7 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", 
 
     # Slope 찾기 (Best Fit)
 
-    tRes = BestSlope(x, y, adm, excludeDelta=excludeDelta)
+    tRes = BestSlope(x1, y1, adm, excludeDelta=excludeDelta)
 
     # Slope 찾기 (Pick the slope)
 
