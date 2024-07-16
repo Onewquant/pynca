@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 from scipy.stats import linregress
 
+
 def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1):
 
     """
@@ -59,12 +60,91 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
         # print(f'({i}) ', tRes.values())
         # print(f'({i}) ', tRes)
         # print(f'({i}) ',tRes['UsedPoints'])
-    Res = pd.concat(Res, ignore_index=True)
+    Res = pd.DataFrame(Res)
     Res = pd.concat([IDs, Res], axis=1)
 
     units = [""] * nKey + list(getattr(tRes, 'units', []))
     Res.attrs['units'] = units
 
+    return Res
+
+
+
+def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1):
+
+    """
+    concData, key, colTime, colConc, dose, adm, dur, doseUnit = df, ["ID", "FEEDING"], "ATIME", "CONC", 100, "Extravascular", 0, "mg"
+    timeUnit, concUnit, down, R2ADJ = "h", "ug/L", "Log", 0
+    MW, SS, iAUC, excludeDelta = 0, False, "", 1
+    """
+
+    concData = pd.DataFrame(concData)
+    nKey = len(key)
+
+    if type(key)==str:
+        if concData[key].isna().sum() > 0:
+            raise ValueError(f"{key} has NA value, which is not allowed!")
+        key = [key,]
+    else:
+        for idcol in key:
+            if concData[idcol].isna().sum() > 0:
+                raise ValueError(f"{idcol} has NA value, which is not allowed!")
+
+    IDs = concData[key].drop_duplicates().reset_index(drop=True)
+    nID = len(IDs)
+
+    if isinstance(dose, (int, float)):
+        dose = [dose] * nID
+        # IDs['PyNCA_Dose_Col'] = dose
+    elif isinstance(dose, (str, )):
+        dose = concData[key+[dose]].drop_duplicates()
+        if len(dose) != nID:
+            raise ValueError("Count of dose does not match with number of NCAs. Unique dose should be applied to each ID")
+    elif isinstance(list(dose), (list, )):
+        if len(dose) != nID:
+            raise ValueError("Count of dose does not match with number of NCAs!")
+        dose = list(dose)
+
+    Res = []
+
+    # 군별 NCA 시행
+
+
+    for i in range(nID):
+        strHeader = f"{key[0]}={IDs.loc[i, key[0]]}"
+        cond = (concData[key[0]] == IDs.loc[i, key[0]])
+        grp_dict= {key[0] : IDs.loc[i, key[0]]}
+
+        if nKey > 1:
+            for j in range(1, nKey):
+                cond &= (concData[key[j]] == IDs.loc[i, key[j]])
+                strHeader += f", {key[j]}={IDs.loc[i, key[j]]}"
+                grp_dict[key[j]] = IDs.loc[i, key[j]]
+
+        tData = concData[cond]
+
+        if not tData.empty:
+
+            # individual subject에서 NCA 시행
+
+            tRes = sNCA(tData[colTime].values, tData[colConc].values,
+                        dose=dose[i], adm=adm, dur=dur, doseUnit=doseUnit,
+                        timeUnit=timeUnit, concUnit=concUnit, R2ADJ=R2ADJ,
+                        down=down, MW=MW, SS=SS, iAUC=iAUC,
+                        Keystring=strHeader, excludeDelta=excludeDelta)
+            # grp_dict.update(tRes)
+            # Res.append(grp_dict)
+
+            Res.append(tRes)
+
+        # if i==0: print(f'({0}) ', tRes.keys())
+        # print(f'({i}) ', tRes.values())
+        # print(f'({i}) ', tRes)
+        # print(f'({i}) ',tRes['UsedPoints'])
+    Res = pd.DataFrame(Res)
+    Res = pd.concat([IDs, Res], axis=1)
+
+    Res['units'] = Res['units'].map(lambda x:[""] * nKey + x)
     return Res
 
 
@@ -323,7 +403,7 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
     if result['LAMZNPT'] > 0:
         result['UsedPoints'] = list(range(np.where(x==result['LAMZLL'])[0][0], np.where(x==result['LAMZUL'])[0][0] + 1))
     else:
-        result['UsedPoints'] = None
+        result['UsedPoints'] = list()
 
     return result
 
@@ -499,6 +579,19 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", 
     dose = dose[0]
     """
 
+    """
+    x = [0.        ,  0.91666667,  1.16666667,  1.66666667,  2.16666667,
+         2.66666667,  3.16666667,  3.66666667,  4.66666667,  6.66666667, 8.66666667, 12.66666667, 24.66666667]
+    y = [0.  ,   0.  ,   0.  ,   0.  ,   0.  ,   1.23,   2.63,   6.35, 72.4 , 470.  , 268.  , 124.  ,  37.4]
+              
+              
+    x=[0.        ,  0.91666667,  1.16666667,  1.66666667,  2.16666667,
+       2.66666667,  3.16666667,  3.66666667,  4.66666667,  6.66666667,
+       8.66666667, 12.66666667, 24.66666667, 48.55]
+    y=[0.  ,   0.  ,   0.  ,   1.  ,   1.87,   2.47,   4.17,  27.7, 100.  , 147.  , 126.  , 173.  ,  80.1 ,  12.9]
+    
+    """
+
     if not (isinstance(x, (list, np.ndarray)) and isinstance(y, (list, np.ndarray)) and
             isinstance(dose, (int, float)) and isinstance(dur, (int, float)) and
             isinstance(adm, str) and isinstance(down, str)):
@@ -576,11 +669,9 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", 
                         if np.sum(x == 0) == 0:
                             x2 = np.concatenate(([0], x))
                             y2 = np.concatenate(([uY[0]], y))
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res,
-                                                          down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
                     else:
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res,
-                                                          down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
                     Units = Units.append(Units.loc["AUCLST", :], ignore_index=True)
                     Units.index = list(Units.index[:-1]) + [iAUC.loc[i, "Name"]]
         else:
@@ -635,7 +726,7 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", 
 
     # Slope 찾기 (Pick the slope)
 
-    tRes["UsedPoints"] = tRes.get("UsedPoints", 0) + np.where(x == tRes["LAMZLL"])[0][0] - np.where(x1 == tRes["LAMZLL"])[0][0]
+    tRes["UsedPoints"] = list(tRes.get("UsedPoints", list()) + np.where(x == tRes["LAMZLL"])[0][0] - np.where(x1 == tRes["LAMZLL"])[0][0]) if not np.isnan(tRes["LAMZLL"]) else list()
     for key in ["R2", "R2ADJ", "LAMZNPT", "LAMZ", "b0", "CORRXY", "LAMZLL", "LAMZUL", "CLSTP"]:
         Res[key] = tRes[key]
 
