@@ -130,8 +130,10 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
 ## For NCA Core
 
 def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm="Extravascular", dur=0, doseUnit="mg",
-           timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1):
+           timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1, slopeMode='Best'):
     """
+    mode : 'Best', 'SNUHCPT', 'Det'
+
     concData, key, colTime, colConc, dose, adm, dur, doseUnit = df, ["ID", "FEEDING"], "ATIME", "CONC", 100, "Extravascular", 0, "mg"
     timeUnit, concUnit, down, R2ADJ = "h", "ug/L", "Log", 0
     MW, SS, iAUC, excludeDelta = 0, False, "", 1
@@ -190,7 +192,7 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
                         dose=dose[i], adm=adm, dur=dur, doseUnit=doseUnit,
                         timeUnit=timeUnit, concUnit=concUnit, R2ADJ=R2ADJ,
                         down=down, MW=MW, SS=SS, iAUC=iAUC,
-                        Keystring=strHeader, excludeDelta=excludeDelta)
+                        Keystring=strHeader, excludeDelta=excludeDelta, slopeMode=slopeMode)
             # grp_dict.update(tRes)
             # Res.append(grp_dict)
 
@@ -513,6 +515,22 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
     elif loc_last - loc_cmax == 2:
         # Cmax 포함하여 총 3개 농도값만 존재
         r0['LAMZNPT'] = 0
+        tmp_mat = np.full((1, len(r0)), np.nan)
+
+        slope, intercept, r_value, p_value, std_err = linregress(x[loc_cmax:loc_last + 1], np.log(y[loc_cmax:loc_last + 1]))
+        n_reg = len(x[loc_cmax:])
+
+        tmp_mat[0, :8] = [r_value ** 2, (1 - (1 - r_value ** 2) * (n_reg - 1) / (n_reg - 2)),
+                      loc_last - loc_cmax + 1, -slope, intercept, r_value, x[loc_cmax], x[loc_last]]
+
+        # R2ADJ 값이 존재하며, LAMZNPT(point 수) 가 3이상이어야 인정
+        tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2), :]
+
+        # [추후예외처리] R2ADJ 값이 <0 일때의 예외처리
+        if (len(np.where(tmp_mat[:, 1] < 0)[0]) > 0) or (slope >= 0):
+            # (terminal slope 가 양의 값을 갖거나 adjusted R2 수치가 undefined 또는 음수가 되는 등 타당성이 인정되는 경우 마지막 농도 point 에 한하여 제외할 수 있다.)
+            raise ValueError(f"adjusted R2 수치가 undefined 또는 음수 / terminal slope : {slope}")
+
     elif loc_last - loc_cmax > 2:
         # Cmax 포함하지 않아도 3개 이상의 농도값 존재
         tmp_mat = np.full((loc_last - loc_start - 1, len(r0)), np.nan)
@@ -527,24 +545,41 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_value ** 2) * (n_reg - 1) / (n_reg - 2)),
                                           loc_last - i + 1, -slope, intercept, r_value, x[i], x[loc_last]]
 
-        # R2ADJ 값이 존재하며, LAMZNPT(point수가) 가 2보다 커야 인정
+        # R2ADJ 값이 존재하며, LAMZNPT(point 수) 가 3이상이어야 인정
         tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2), :]
 
         # [추후예외처리] R2ADJ 값이 <0 일때의 예외처리
+        if (len(np.where(tmp_mat[:, 1] < 0)[0]) > 0) or (slope >= 0):
+            # (terminal slope 가 양의 값을 갖거나 adjusted R2 수치가 undefined 또는 음수가 되는 등 타당성이 인정되는 경우 마지막 농도 point 에 한하여 제외할 수 있다.)
+            raise ValueError(f"adjusted R2 수치가 undefined 또는 음수 / terminal slope : {slope}")
 
         if tmp_mat.shape[0] > 0:
-            max_adj_rsq = np.max(tmp_mat[:, 1])
-            oks = np.abs(max_adj_rsq - tmp_mat[:, 1]) < TOL
-            n_max = np.max(tmp_mat[oks, 2])
-            r0 = tmp_mat[oks & (tmp_mat[:, 2] == n_max), :][0]
-            r0[8] = np.exp(r0[4] - r0[3] * np.max(x[np.isfinite(y)])) # CLSTP
-            r0 = dict(zip(res_columns, list(r0)))
+
+            # final_rsq = np.nan
+            prev_inx = np.nan
+            prev_rsq = 0
+            for inx, rsq_cand in enumerate(reversed(list(tmp_mat[:,1]))):
+                rsq_cand_inx = len(tmp_mat)-inx-1
+                rsq_delta = rsq_cand - prev_rsq
+                if (rsq_delta < TOL):
+                    # final_rsq = prev_rsq
+                    final_inx = prev_inx
+                    # print(prev_inx)
+                    break
+                elif (inx==len(tmp_mat)-1):
+                    # final_rsq = rsq_cand
+                    final_inx = rsq_cand_inx
+                else:
+                    prev_rsq = rsq_cand
+                    prev_inx = rsq_cand_inx
+                # print(f'{inx} / {prev_rsq} / {rsq_cand} / {final_rsq}')
+            r0 = dict(zip(res_columns, list(tmp_mat[final_inx])))
         else:
             r0['LAMZNPT'] = 0
 
     else:
         # [추후예외처리] 그 외 다른 경우
-        raise ValueError
+        raise ValueError("그 외 다른 에러")
 
 
     if excludeDelta < 1:
@@ -765,7 +800,7 @@ def IntAUC(x, y, t1, t2, Res, down="Linear"):
 
 
 def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", iAUC=None,
-         down="Linear", R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1):
+         down="Linear", R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1, slopeMode='BEST'):
     """
     x, y, adm, dur, doseUnit, timeUnit, concUnit = tData[colTime].values, tData[colConc].values, adm, dur, doseUnit, timeUnit, concUnit
     R2ADJ, down, MW, SS, iAUC, Keystring, excludeDelta = R2ADJ, down, MW, SS, iAUC, strHeader, excludeDelta
@@ -908,8 +943,10 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", 
             y3 = y0
 
     # Slope 찾기 (Best Fit)
-
-    tRes = BestSlope(x1, y1, adm, excludeDelta=excludeDelta)
+    if slopeMode=='SNUHCPT':
+        tRes = SnuhcptSlope(x1, y1, adm, excludeDelta=excludeDelta)
+    else:
+        tRes = BestSlope(x1, y1, adm, excludeDelta=excludeDelta)
 
     # Slope 찾기 (Pick the slope)
 
@@ -917,8 +954,7 @@ def sNCA(x, y, dose=0, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", 
         if tRes["LAMZNPT"] < 2:
             tRes = DetSlope(x1, y1, Keystring)
         elif tRes["R2ADJ"] < R2ADJ:
-            tRes = DetSlope(x1, y1, Keystring, sel1=np.where(x1 == tRes["LAMZLL"])[0],
-                            sel2=np.where(x1 == tRes["LAMZUL"])[0])
+            tRes = DetSlope(x1, y1, Keystring, sel1=np.where(x1 == tRes["LAMZLL"])[0], sel2=np.where(x1 == tRes["LAMZUL"])[0])
 
     # Slope 찾기 (Pick the slope)
 
