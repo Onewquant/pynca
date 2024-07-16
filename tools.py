@@ -367,8 +367,7 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
         raise ValueError("Option excludeDelta should be non-negative!")
 
     n = len(x)
-    if n == 0 or n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype,
-                                                                                           np.number) or np.any(y < 0):
+    if n == 0 or n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype, np.number) or np.any(y < 0):
         result['LAMZNPT'] = 0
         return result
 
@@ -396,13 +395,12 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
         for i in range(loc_start, loc_last - 1):
             # i=10
             # i=11
-            slope, intercept, r_value, p_value, std_err = linregress(x[i:], np.log(y[i:loc_last + 1]))
+            # slope, intercept, r_value, p_value, std_err = linregress(x[i:], np.log(y[i:loc_last + 1]))
+            slope, intercept, r_value, p_value, std_err = linregress(x[i:loc_last+1], np.log(y[i:loc_last + 1]))
             n_reg = len(x[i:])
 
             tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_value ** 2) * (n_reg - 1) / (n_reg - 2)),
-                                          #########################################
-                                          loc_last - i + 1, -slope, intercept, r_value, x[i],
-                                          x[loc_last]]  ##### used points ###########################
+                                          loc_last - i + 1, -slope, intercept, r_value, x[i], x[loc_last]]
 
         tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2), :]
 
@@ -415,6 +413,139 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             r0 = dict(zip(res_columns, list(r0)))
         else:
             r0['LAMZNPT'] = 0
+
+    if excludeDelta < 1:
+        x1 = x[:-1]
+        y1 = y[:-1]
+        r1 = result.copy()
+        loc_start = np.argmax(y1) if adm.upper().strip() == "BOLUS" else np.argmax(y1) + 1
+        loc_last = np.max(np.where(y1 > 0)[0])
+
+        if loc_last - loc_start < 2:
+            r1['LAMZNPT'] = 0
+        else:
+            tmp_mat = np.full((loc_last - loc_start - 1, len(r1)), np.nan)
+            res_columns = list(r1.keys())
+
+            for i in range(loc_start, loc_last - 1):
+                # i=9
+                slope, intercept, r_value, p_value, std_err = linregress(x1[i:loc_last], np.log(y1[i:loc_last]))
+                n_reg = len(x1[i:loc_last])
+                tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_value ** 2) * (n_reg - 1) / (n_reg - 2)),
+                                              loc_last - i, -slope, intercept, r_value, x1[i], x1[loc_last - 1]]
+
+            tmp_mat = tmp_mat[tmp_mat[:, 2] > 2, :]
+
+            if tmp_mat.shape[0] > 0:
+                max_adj_rsq = np.max(tmp_mat[:, 1])
+                oks = np.abs(max_adj_rsq - tmp_mat[:, 1]) < TOL
+                n_max = np.max(tmp_mat[oks, 2])
+                r1 = tmp_mat[oks & (tmp_mat[:, 2] == n_max), :][0]
+                r1[8] = np.exp(r1[4] - r1[3] * np.max(x[np.isfinite(y)]))
+                r1 = dict(zip(res_columns, list(r1)))
+            else:
+                r1['LAMZNPT'] = 0
+
+        if np.isnan(r1[1]):
+            result = r0
+        elif np.isnan(r0[1]):
+            result = r1
+        elif r1[1] - r0[1] > excludeDelta:
+            result = r1
+        else:
+            result = r0
+    else:
+        result = r0
+
+    # if type(result)==dict: result = result.values()
+
+    # result = dict(zip(res_columns, list(result)))
+    if result['LAMZNPT'] > 0:
+        result['UsedPoints'] = list(
+            range(np.where(x == result['LAMZLL'])[0][0], np.where(x == result['LAMZUL'])[0][0] + 1))
+    else:
+        result['UsedPoints'] = list()
+
+    return result
+
+
+def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
+    # x, y, adm, TOL, excludeDelta = x1, y1, adm, 1e-04, excludeDelta
+    """
+    x = np.array([ 1.66666667,  2.66666667,  3.66666667,  4.66666667,  5.66666667,
+        6.66666667,  7.66666667,  8.66666667, 10.66666667, 12.66666667,
+       24.66666667, 47.93333333])
+    y = np.array([  44.7,  247. ,  581. ,  890. , 1150. , 1140. , 1240. , 1330. ,
+        958. ,  649. ,   77.1,   39.4])
+    """
+
+    result = {
+        'R2': np.nan, 'R2ADJ': np.nan, 'LAMZNPT': 0, 'LAMZ': np.nan,
+        'b0': np.nan, 'CORRXY': np.nan, 'LAMZLL': np.nan, 'LAMZUL': np.nan, 'CLSTP': np.nan
+    }
+    if excludeDelta < 0:
+        raise ValueError("Option excludeDelta should be non-negative!")
+
+    n = len(x)
+    if n == 0 or n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype, np.number) or np.any(y < 0):
+        result['LAMZNPT'] = 0
+        return result
+
+    if len(np.unique(y)) == 1:
+        result['LAMZNPT'] = 0
+        result['b0'] = np.unique(y)[0]
+        return result
+
+    # (Cmax 의 index 위치, Conc이 0이 아닌 끝나는 지점 index 위치) 찾기
+
+    r0 = result.copy()
+    loc_cmax = np.argmax(y)
+    loc_start = np.argmax(y) if adm.upper().strip() == "BOLUS" else np.argmax(y) + 1
+    loc_last = np.max(np.where(y > 0)[0])
+
+    if np.isnan(loc_start) or np.isnan(loc_last):
+        result['LAMZNPT'] = 0
+        return result
+
+    if loc_last - loc_cmax < 2:
+        # Cmax 포함하여 총 2개 미만의 농도값만 존재
+        r0['LAMZNPT'] = 0
+    elif loc_last - loc_cmax == 2:
+        # Cmax 포함하여 총 3개 농도값만 존재
+        r0['LAMZNPT'] = 0
+    elif loc_last - loc_cmax > 2:
+        # Cmax 포함하지 않아도 3개 이상의 농도값 존재
+        tmp_mat = np.full((loc_last - loc_start - 1, len(r0)), np.nan)
+        res_columns = list(r0.keys())
+
+        for i in range(loc_start, loc_last - 1):
+            # i=8
+            # i=9
+            slope, intercept, r_value, p_value, std_err = linregress(x[i:loc_last+1], np.log(y[i:loc_last+1]))
+            n_reg = len(x[i:])
+
+            tmp_mat[i - loc_start, :8] = [r_value ** 2, (1 - (1 - r_value ** 2) * (n_reg - 1) / (n_reg - 2)),
+                                          loc_last - i + 1, -slope, intercept, r_value, x[i], x[loc_last]]
+
+        # R2ADJ 값이 존재하며, LAMZNPT(point수가) 가 2보다 커야 인정
+        tmp_mat = tmp_mat[np.isfinite(tmp_mat[:, 1]) & (tmp_mat[:, 2] > 2), :]
+
+        # [추후예외처리] R2ADJ 값이 <0 일때의 예외처리
+
+        if tmp_mat.shape[0] > 0:
+            max_adj_rsq = np.max(tmp_mat[:, 1])
+            oks = np.abs(max_adj_rsq - tmp_mat[:, 1]) < TOL
+            n_max = np.max(tmp_mat[oks, 2])
+            r0 = tmp_mat[oks & (tmp_mat[:, 2] == n_max), :][0]
+            r0[8] = np.exp(r0[4] - r0[3] * np.max(x[np.isfinite(y)])) # CLSTP
+            r0 = dict(zip(res_columns, list(r0)))
+        else:
+            r0['LAMZNPT'] = 0
+
+    else:
+        # [추후예외처리] 그 외 다른 경우
+        raise ValueError
+
 
     if excludeDelta < 1:
         x1 = x[:-1]
