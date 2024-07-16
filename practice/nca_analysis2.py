@@ -1,4 +1,4 @@
-from project_tools import *
+from tools import *
 
 
 df = pd.read_csv('C:/Users/ilma0/PycharmProjects/pynca/resource/CKD379-FDI/PK_analysis/CKD379_ConcPrep_Sitagliptin(R).csv')
