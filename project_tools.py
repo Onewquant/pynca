@@ -129,76 +129,13 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
 
 ## For NCA Core
 
-
 def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm="Extravascular", dur=0, doseUnit="mg",
            timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1):
     """
     concData, key, colTime, colConc, dose, adm, dur, doseUnit = df, ["ID", "FEEDING"], "ATIME", "CONC", 100, "Extravascular", 0, "mg"
     timeUnit, concUnit, down, R2ADJ = "h", "ug/L", "Log", 0
     MW, SS, iAUC, excludeDelta = 0, False, "", 1
-    """
-
-    concData = pd.DataFrame(concData)
-    nKey = len(key)
-
-    for i in range(nKey):
-        if concData[key[i]].isna().sum() > 0:
-            raise ValueError(f"{key[i]} has NA value, which is not allowed!")
-
-    IDs = concData[key].drop_duplicates().reset_index(drop=True)
-    nID = len(IDs)
-
-    if isinstance(dose, (int, float)):
-        dose = [dose] * nID
-    elif len(dose) != nID:
-        raise ValueError("Count of dose does not match with number of NCAs!")
-
-    Res = []
-
-    # 군별 NCA 시행
-
-    # for i in range(nID): break
-    # i = 8
-
-    for i in range(nID):
-        strHeader = f"{key[0]}={IDs.loc[i, key[0]]}"
-        cond = (concData[key[0]] == IDs.loc[i, key[0]])
-
-        if nKey > 1:
-            for j in range(1, nKey):
-                cond &= (concData[key[j]] == IDs.loc[i, key[j]])
-                strHeader += f", {key[j]}={IDs.loc[i, key[j]]}"
-
-        tData = concData[cond]
-
-        if not tData.empty:
-            # individual subject에서 NCA 시행
-
-            tRes = sNCA(tData[colTime].values, tData[colConc].values,
-                        dose=dose[i], adm=adm, dur=dur, doseUnit=doseUnit,
-                        timeUnit=timeUnit, concUnit=concUnit, R2ADJ=R2ADJ,
-                        down=down, MW=MW, SS=SS, iAUC=iAUC,
-                        Keystring=strHeader, excludeDelta=excludeDelta)
-            Res.append(tRes)
-        # if i==0: print(f'({0}) ', tRes.keys())
-        # print(f'({i}) ', tRes.values())
-        # print(f'({i}) ', tRes)
-        # print(f'({i}) ',tRes['UsedPoints'])
-    Res = pd.DataFrame(Res)
-    Res = pd.concat([IDs, Res], axis=1)
-
-    units = [""] * nKey + list(getattr(tRes, 'units', []))
-    Res.attrs['units'] = units
-
-    return Res
-
-
-def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm="Extravascular", dur=0, doseUnit="mg",
-           timeUnit="h", concUnit="ug/L", down="Linear", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1):
-    """
-    concData, key, colTime, colConc, dose, adm, dur, doseUnit = df, ["ID", "FEEDING"], "ATIME", "CONC", 100, "Extravascular", 0, "mg"
-    timeUnit, concUnit, down, R2ADJ = "h", "ug/L", "Log", 0
-    MW, SS, iAUC, excludeDelta = 0, False, "", 1
+    dose='DOSE'
     """
 
     concData = pd.DataFrame(concData)
@@ -220,10 +157,10 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
         dose = [dose] * nID
         # IDs['PyNCA_Dose_Col'] = dose
     elif isinstance(dose, (str,)):
-        dose = concData[key + [dose]].drop_duplicates()
-        if len(dose) != nID:
-            raise ValueError(
-                "Count of dose does not match with number of NCAs. Unique dose should be applied to each ID")
+        dose_df = concData[key + [dose]].drop_duplicates(ignore_index=True)
+        if len(dose_df) != nID:
+            raise ValueError("Count of dose does not match with number of NCAs. Unique dose should be applied to each ID")
+        dose = list(dose_df[dose])
     elif isinstance(list(dose), (list,)):
         if len(dose) != nID:
             raise ValueError("Count of dose does not match with number of NCAs!")
