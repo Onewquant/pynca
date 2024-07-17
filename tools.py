@@ -167,6 +167,7 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, adm=
         if len(dose) != nID:
             raise ValueError("Count of dose does not match with number of NCAs!")
         dose = list(dose)
+    IDs['DOSE'] = dose
 
     Res = []
 
