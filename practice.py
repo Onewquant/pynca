@@ -1,42 +1,29 @@
 from tools import *
 
 
-drug_list = ['Empagliflozin','Metformin','Sitagliptin', 'Empagliflozin']
+drug_list = ['Metformin','Sitagliptin', 'Empagliflozin']
 # df = pd.read_csv('./CKD379_ConcPrep_Empagliflozin(R).csv')
 result_dict=dict()
 for drug in drug_list:
     df = pd.read_csv(f'./CKD379_ConcPrep_{drug}(R).csv')
     result = tblNCA(df, key=["ID", "FEEDING"], colTime="ATIME", colConc="CONC",
-                    dose='DOSE', adm="Extravascular", dur=0, doseUnit="mg",
+                    dose='DOSE', tau=np.nan, adm="Extravascular", dur=0, doseUnit="mg",
                     timeUnit="h", concUnit="ug/L", down="Log", R2ADJ=0, MW=0,
-                    SS=False, iAUC="", excludeDelta=1, slopeMode="SNUHCPT")
-
+                    SS=False, iAUC="", excludeDelta=1, slopeMode="SNUHCPT", outputStyle="PW")
+    result = result.sort_values(by=['FEEDING', 'ID'], ignore_index=True)
+    result.to_csv(f'./AUTOResult({drug}).csv', index=False, encoding='utf-8-sig')
     result_dict[drug] = result.copy()
-    result_dict
+
+    # result_dict
 
 
-result = result.sort_values(by=['FEEDING','ID'], ignore_index=True)
 
-result['SPAN'] = (result['LAMZUL']-result['LAMZLL'])/result['LAMZHL']
-result['AUCLSTD'] = result['AUCLST']/result['DOSE']
-result['CAVG'] = (result['AUCTAU'])/result['TAU']
-result['SWINGTAU'] = (result['CMAX']-result['CTAU'])/result['CTAU']
-result['FLUCTP'] = 100*(result['CMAX']-result['CMIN'])/result['CAVG']
-result['FLUCTPTAU'] = 100*(result['CMAX']-result['CTAU'])/result['CAVG']
 
-result['AUCALL']
-# result['b0'].iloc[0]
-result[['ID','FEEDING','CLFO']]
-result[['ID','FEEDING','VZFO']]
-result[['ID','FEEDING','AUCALL']]
-result[['ID','FEEDING','CMAX']]
-result[['ID','FEEDING','MRTIVIFO']]
-result[['ID','FEEDING','AUCLST']]
-result[['ID','FEEDING',"MRTLST"]]
+
 result.columns
 
 
-multiple_col_str = 'Dose	Rsq	Rsq_adjusted	Corr_XY	No_points_lambda_z	Lambda_z	Lambda_z_intercept	Lambda_z_lower	Lambda_z_upper	HL_Lambda_z	Span	Tlag	Tmax	Cmax	Cmax_D	Tlast	Clast	Clast_pred	AUClast	AUClast_D	AUCall	AUCINF_obs	AUCINF_D_obs	AUC_%Extrap_obs	AUCINF_pred	AUCINF_D_pred	AUC_%Extrap_pred	Tmin	Cmin	Ctau	Cavg	Swing_Tau	Fluctuation%	Fluctuation%_Tau	CLss_F	MRTINF_obs	MRTINF_pred	Vz_F	Accumulation_Index	AUC_TAU	AUC_TAU_D	AUC_TAU_%Extrap	AUMC_TAU'
+multiple_col_str = 'N_Samples	Dose	Rsq	Rsq_adjusted	Corr_XY	No_points_lambda_z	Lambda_z	Lambda_z_intercept	Lambda_z_lower	Lambda_z_upper	HL_Lambda_z	Span	Tlag	Tmax	Cmax	Cmax_D	Tlast	Clast	Clast_pred	AUClast	AUClast_D	AUCall	AUCINF_obs	AUCINF_D_obs	AUC_%Extrap_obs	AUCINF_pred	AUCINF_D_pred	AUC_%Extrap_pred	Tmin	Cmin	Ctau	Cavg	Swing_Tau	Fluctuation%	Fluctuation%_Tau	CLss_F	MRTINF_obs	MRTINF_pred	Vz_F	Accumulation_Index	AUC_TAU	AUC_TAU_D	AUC_TAU_%Extrap	AUMC_TAU'
 multiple_col_str = '"'+multiple_col_str.replace('\t','", "') + '"'
 
 single_col_str = 'N_Samples	Dose	Rsq	Rsq_adjusted	Corr_XY	No_points_lambda_z	Lambda_z	Lambda_z_intercept	Lambda_z_lower	Lambda_z_upper	HL_Lambda_z	Span	Tlag	Tmax	Cmax	Cmax_D	Tlast	Clast	Clast_pred	AUClast	AUClast_D	AUCall	AUCINF_obs	AUCINF_D_obs	AUC_%Extrap_obs	Vz_F_obs	Cl_F_obs	AUCINF_pred	AUCINF_D_pred	AUC_%Extrap_pred	Vz_F_pred	Cl_F_pred	AUMClast	AUMCINF_obs	AUMC_%Extrap_obs	AUMCINF_pred	AUMC_%Extrap_pred	MRTlast	MRTINF_obs	MRTINF_pred'
@@ -45,7 +32,7 @@ single_col_str = '"'+single_col_str.replace('\t','", "') + '"'
 
 
 
-{
+col_dict={
  # <존재 공통항목>
  "Dose":"DOSE",
  "Rsq":"R2",
@@ -87,12 +74,12 @@ single_col_str = '"'+single_col_str.replace('\t','", "') + '"'
 
  # <후속 추가 필요>
  # <후속 추가 필요> (공통)
- "Span": "SPAN",           # LAMZUL-LAMZLL/LAMZHL
- "MRTINF_obs":"MRTIFO",    # AUMCIFO/AUCIFO (non-infusion에서) AUMCIFO/AUCIFO - infusion time/2 (infusion에서)
- "MRTINF_pred": "MRTIFO",  # AUMCIFP/AUCIFP (non-infusion에서) AUMCIFP/AUCIFP - infusion time/2 (infusion에서)
+ "Span": "SPAN",           #@@ LAMZUL-LAMZLL/LAMZHL
+ "MRTINF_obs":"MRTIFO",    #@@ AUMCIFO/AUCIFO (non-infusion에서) AUMCIFO/AUCIFO - infusion time/2 (infusion에서)
+ "MRTINF_pred": "MRTIFP",  #@@ AUMCIFP/AUCIFP (non-infusion에서) AUMCIFP/AUCIFP - infusion time/2 (infusion에서)
 
  # <후속 추가 필요> (single 투여)
- "MRTlast":"MRTLST",   # AUMClast/AUClast
+ "MRTlast":"MRTLST",   #@@ AUMClast/AUClast
 
  # <후속 추가 필요> (multiple 투여)
  "Cavg": "CAVG",                    # AUCTAU / TAU
@@ -108,9 +95,9 @@ single_col_str = '"'+single_col_str.replace('\t','", "') + '"'
 
  # <새로 추가 필요>
  # <새로 추가 필요> (공통)
- "Tmin":"TMIN",
- "Cmin":"CMIN",
- "N_Samples":"NSAMPLES",
+ "Tmin":"TMIN",                #@@
+ "Cmin":"CMIN",                #@@
+ "N_Samples":"NSAMPLES",       #@@
 
  # <새로 추가 필요> (multiple 투여)
  "TAU":"TAU",                   # 이건 dose처럼 함수에 input으로 입력해야할듯
@@ -120,4 +107,7 @@ single_col_str = '"'+single_col_str.replace('\t','", "') + '"'
 
   }
 
+trans_dict = dict()
+for k, v in col_dict.items():
+ trans_dict.update({v:k})
 
