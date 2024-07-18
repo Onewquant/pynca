@@ -6,10 +6,7 @@ drug_list = ['Metformin','Sitagliptin', 'Empagliflozin']
 result_dict=dict()
 for drug in drug_list:
     df = pd.read_csv(f'./CKD379_ConcPrep_{drug}(R).csv')
-    result = tblNCA(df, key=["ID", "FEEDING"], colTime="ATIME", colConc="CONC",
-                    dose='DOSE', tau=np.nan, adm="Extravascular", dur=0, doseUnit="mg",
-                    timeUnit="h", concUnit="ug/L", down="Log", R2ADJ=0, MW=0,
-                    SS=False, iAUC="", excludeDelta=1, slopeMode="SNUHCPT", outputStyle="PW")
+    result = tblNCA(df, key=["ID", "FEEDING"], colTime="ATIME", colConc="CONC", dose='DOSE', tau=np.nan, adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", down="Log", R2ADJ=0, MW=0, SS=False, iAUC="", excludeDelta=1, slopeMode="SNUHCPT", outputStyle="PW")
     result = result.sort_values(by=['FEEDING', 'ID'], ignore_index=True)
     result.to_csv(f'./AUTOResult({drug}).csv', index=False, encoding='utf-8-sig')
     result_dict[drug] = result.copy()
