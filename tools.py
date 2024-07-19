@@ -242,13 +242,12 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
     NCAR_single = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL',
                    'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD',
                    'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'VZFO', 'CLFO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'VZFP',
-                   'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP', 'MRTIVLST', 'MRTIVIFO',
-                   'MRTIVIFP']
+                   'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP', 'MRTLST', 'MRTIFO', 'MRTIFP']
     NCAR_multiple = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL',
                      'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST',
                      'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'TMIN',
                      'CMIN', 'CTAU', 'CAVG', 'SWINGTAU', 'FLUCTP', 'FLUCTPTAU', 'CLSSF', 'MRTIVIFO', 'MRTIVIFP',
-                     'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAUD', '', 'AUMCTAU']
+                     'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
 
     if ms_type == 'single':
         Res = Res[key + NCAR_single].copy()
@@ -1034,8 +1033,7 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     Res["AUMCPEP"] = (1 - Res["AUMCLST"] / Res["AUMCIFP"]) * 100
 
 
-    Res["MRTIFO"] = Res["AUMCIFO"]/Res["AUCIFO"] if Res["AUCIFO"]!=0 else np.nan
-    Res["MRTIFP"] = Res["AUMCIFP"] / Res["AUCIFP"] if Res["AUCIFP"] != 0 else np.nan
+
 
     if adm.strip().upper()=="INFUSION":
         infusion_time = np.nan               # 추후 input으로 추가 필요
@@ -1080,6 +1078,10 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
             Res["MRTEVLST"] = Res["AUMCLST"] / Res["AUCLST"]
             Res["MRTEVIFO"] = Res["AUMCIFO"] / Res["AUCIFO"]
             Res["MRTEVIFP"] = Res["AUMCIFP"] / Res["AUCIFP"]
+
+        Res["MRTLST"] = Res["MRTEVLST"]
+        Res["MRTIFO"] = Res["MRTEVIFO"]
+        Res["MRTIFP"] = Res["MRTEVIFP"]
     else:
         if SS:
             Res["VZO"] = dose / Res["AUCLST"] / Res["LAMZ"]
@@ -1101,6 +1103,10 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
             Res["MRTIVIFP"] = Res["AUMCIFP"] / Res["AUCIFP"] - dur / 2
             Res["VSSO"] = Res["MRTIVIFO"] * Res["CLO"]
             Res["VSSP"] = Res["MRTIVIFP"] * Res["CLP"]
+
+        Res["MRTLST"] = Res["MRTIVLST"]
+        Res["MRTIFO"] = Res["MRTIVIFO"]
+        Res["MRTIFP"] = Res["MRTIVIFP"]
 
     if isinstance(iAUC, pd.DataFrame):
         niAUC = len(iAUC)
