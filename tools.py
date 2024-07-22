@@ -250,9 +250,9 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
                      'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
 
     if ms_type == 'single':
-        Res = Res[key + NCAR_single].copy()
+        Res = Res[key + NCAR_single + ['units','UsedPoints']].copy()
     elif ms_type == 'multiple':
-        Res = Res[key + NCAR_multiple].copy()
+        Res = Res[key + NCAR_multiple + ['units','UsedPoints']].copy()
     Res = Res.loc[:, ~Res.columns.duplicated(keep='first')]
 
     return Res
@@ -1125,7 +1125,8 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     for key in Res.keys():
         Res[key] *= Units.loc[key, 'Factor']
         # Units.loc[key]
-
+    # len(RetNames1)
+    # len(Units)
     Res["NSAMPLES"] = Res["NSAMPLES"].astype(int)
     Res["units"] = Units.loc[RetNames1, 'Unit'].values.tolist() + [Units.loc["AUCLST", 'Unit']] * niAUC
     Res["UsedPoints"] = tRes.get("UsedPoints", [])
