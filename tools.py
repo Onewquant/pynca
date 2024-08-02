@@ -917,6 +917,8 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     # set(ncar_multiple).intersection(set(ncar_single)).difference(set(RetNames1))
     # set(ncar_multiple).intersection(set(ncar_single))
 
+    Units = Unit(doseUnit=doseUnit, timeUnit=timeUnit, concUnit=concUnit, MW=MW)
+    # Units = Unit()
     RetNames1 = ["b0", "CMAX", "CMIN", "CMAXD", "TMAX", "TLAG", "CLST",
                  "CLSTP", "TLST", "LAMZHL", "LAMZ", "LAMZLL", "LAMZUL",
                  "LAMZNPT", "CORRXY", "R2", "R2ADJ", "AUCLST", "AUCALL",
@@ -928,11 +930,9 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
         RetNames1.extend(["C0", "AUCPBEO", "AUCPBEP"])
 
     if adm.strip().upper() == "EXTRAVASCULAR":
-        RetNames1.extend(["VZFO", "VZFP", "CLFO", "CLFP", "MRTEVLST",
-                          "MRTEVIFO", "MRTEVIFP"])
+        RetNames1.extend(["VZFO", "VZFP", "CLFO", "CLFP", "MRTEVLST", "MRTEVIFO", "MRTEVIFP"])
     else:
-        RetNames1.extend(["VZO", "VZP", "CLO", "CLP", "MRTIVLST",
-                          "MRTIVIFO", "MRTIVIFP", "VSSO", "VSSP"])
+        RetNames1.extend(["VZO", "VZP", "CLO", "CLP", "MRTIVLST", "MRTIVIFO", "MRTIVIFP", "VSSO", "VSSP"])
 
 
 
@@ -942,7 +942,6 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
         Res["LAMZNPT"] = 0
         return Res
 
-    Units = Unit(doseUnit=doseUnit, timeUnit=timeUnit, concUnit=concUnit, MW=MW)
     uY = np.unique(y)
 
     # unique한 conc 값이 1개만있을때 (==Cmax, Cmin)
@@ -968,6 +967,8 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
         Res["LAMZNPT"] = 0
         Res["b0"] = uY[0]
 
+        # 구간 AUC 산출 추가
+
         if isinstance(iAUC, pd.DataFrame):
             niAUC = len(iAUC)
             if niAUC > 0:
@@ -979,11 +980,9 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
                         if np.sum(x == 0) == 0:
                             x2 = np.concatenate(([0], x))
                             y2 = np.concatenate(([uY[0]], y))
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res,
-                                                          down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
                     else:
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res,
-                                                          down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
                     Units = Units.append(Units.loc["AUCLST", :], ignore_index=True)
                     Units.index = list(Units.index[:-1]) + [iAUC.loc[i, "Name"]]
         else:
