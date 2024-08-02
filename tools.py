@@ -238,7 +238,7 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
     Res = pd.DataFrame(Res)
     Res = pd.concat([IDs, Res], axis=1)
 
-    Res['units'] = Res['units'].map(lambda x: [""] * nKey + x)
+    # Res['units'] = Res['units'].map(lambda x: [""] * nKey + x)
 
     ncar_single = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'VZFO', 'CLFO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'VZFP', 'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP', 'MRTLST', 'MRTIFO', 'MRTIFP']
     ncar_multiple = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'TMIN', 'CMIN', 'CTAU', 'CAVG', 'SWINGTAU', 'FLUCTP', 'FLUCTPTAU', 'CLSSF', 'MRTIVIFO', 'MRTIVIFP', 'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
