@@ -184,6 +184,7 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
     else:
         ms_type = 'multiple'
 
+
     # Dose와 관련하여
 
     if isinstance(dose, (int, float)):
@@ -224,7 +225,7 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
                         dose=dose[i], tau=tau[i], adm=adm, dur=dur, doseUnit=doseUnit,
                         timeUnit=timeUnit, concUnit=concUnit, R2ADJ=R2ADJ,
                         down=down, MW=MW, SS=SS, iAUC=iAUC,
-                        Keystring=strHeader, excludeDelta=excludeDelta, slopeMode=slopeMode)
+                        Keystring=strHeader, excludeDelta=excludeDelta, slopeMode=slopeMode, ms_type=ms_type)
             # grp_dict.update(tRes)
             # Res.append(grp_dict)
 
@@ -233,26 +234,24 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
         # if i==0: print(f'({0}) ', tRes.keys())
         # print(f'({i}) ', tRes.values())
         # print(f'({i}) ', tRes)
-        # print(f'({i}) ',tRes['UsedPoints'])
+        # print(f'({i}) ',tRes['USEDPOINTS'])
     Res = pd.DataFrame(Res)
     Res = pd.concat([IDs, Res], axis=1)
 
     Res['units'] = Res['units'].map(lambda x: [""] * nKey + x)
 
-    NCAR_single = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL',
-                   'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD',
-                   'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'VZFO', 'CLFO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'VZFP',
-                   'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP', 'MRTLST', 'MRTIFO', 'MRTIFP']
-    NCAR_multiple = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL',
-                     'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST',
-                     'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'TMIN',
-                     'CMIN', 'CTAU', 'CAVG', 'SWINGTAU', 'FLUCTP', 'FLUCTPTAU', 'CLSSF', 'MRTIVIFO', 'MRTIVIFP',
-                     'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
+    ncar_single = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'VZFO', 'CLFO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'VZFP', 'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP', 'MRTLST', 'MRTIFO', 'MRTIFP']
+    ncar_multiple = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'TMIN', 'CMIN', 'CTAU', 'CAVG', 'SWINGTAU', 'FLUCTP', 'FLUCTPTAU', 'CLSSF', 'MRTIVIFO', 'MRTIVIFP', 'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
+    ncar_both = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN', 'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'VZFO', 'CLFO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'TMIN', 'CMIN', 'CTAU', 'CAVG', 'SWING', 'SWINGTAU', 'FLUCTP', 'FLUCTPTAU', 'CLSSF', 'VZFP', 'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP', 'MRTIVLST', 'MRTIVIFO', 'MRTIVIFP', 'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
+
 
     if ms_type == 'single':
-        Res = Res[key + NCAR_single + ['units','UsedPoints']].copy()
+        Res = Res[key + ncar_single + ['USEDPOINTS']].copy()
     elif ms_type == 'multiple':
-        Res = Res[key + NCAR_multiple + ['units','UsedPoints']].copy()
+        Res = Res[key + ncar_multiple + ['USEDPOINTS']].copy()
+    elif ms_type == 'both':
+        Res = Res[key + ncar_both + ['USEDPOINTS']].copy()
+
     Res = Res.loc[:, ~Res.columns.duplicated(keep='first')]
 
     return Res
@@ -297,43 +296,51 @@ def Unit(code="", timeUnit="h", concUnit="ng/mL", doseUnit="mg", MW=0):
         if MW == 0:
             print("Warning: Molecular weight should be given for more informative results!")
 
-    TestCD = ["NSAMPLES", "SPAN", "b0", "CMAX", "CMIN", "CMAXD", "TMAX", "TMIN", "TLAG", "CLST",
-              "CLSTP", "TLST", "LAMZHL", "LAMZ", "LAMZLL", "LAMZUL",
-              "LAMZNPT", "CORRXY", "R2", "R2ADJ", "C0", "AUCLST", "AUCLSTD",
-              "AUCALL", "AUCIFO", "AUCIFOD", "AUCIFP", "AUCIFPD",
-              "AUCPEO", "AUCPEP", "AUCPBEO", "AUCPBEP", "AUMCLST",
-              "AUMCIFO", "AUMCIFP", "AUMCPEO", "AUMCPEP", "MRTLST", "MRTIFO", "MRTIFP", "MRTIVLST",
-              "MRTIVIFO", "MRTIVIFP", "MRTEVLST", "MRTEVIFO", "MRTEVIFP",
-              "VZO", "VZP", "VZFO", "VZFP", "CLO", "CLP", "CLFO",
-              "CLFP", "VSSO", "VSSP"]
+    TestCD = ["NSAMPLES", "SPAN", "b0", "CMAX", "CMIN", "CMAXD", "TMAX", "TMIN", "TLAG", "CLST", "CLSTP", "TLST",
+              "LAMZHL", "LAMZ", "LAMZLL", "LAMZUL", "LAMZNPT", "CORRXY", "R2", "R2ADJ", "C0", "AUCLST", "AUCLSTD",
+              "AUCALL", "AUCIFO", "AUCIFOD", "AUCIFP", "AUCIFPD", "AUCPEO", "AUCPEP", "AUCPBEO", "AUCPBEP", "AUMCLST",
+              "AUMCIFO", "AUMCIFP", "AUMCPEO", "AUMCPEP", "MRTLST", "MRTIFO", "MRTIFP", "MRTIVLST", "MRTIVIFO", "MRTIVIFP",
+              "MRTEVLST", "MRTEVIFO", "MRTEVIFP", "VZO", "VZP", "VZFO", "VZFP", "CLO", "CLP", "CLFO", "CLFP", "VSSO", "VSSP",
+
+              'DOSE', 'TAU', 'CAVG', 'CTAU', 'AUCTAU', 'FLUCTPTAU', 'CLSSF', 'ACCIDX', 'SWINGTAU', 'AUCTAUD', 'AUMCTAU',
+              'FLUCTP', 'VZF', 'AUCTAUPE', 'SWING', "USEDPOINTS"]
+
+    # trans_ucol = ['DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'TLAG', 'TMAX', 'CMAX',
+    #  'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD', 'AUCPEO', 'AUCIFP',
+    #  'AUCIFPD', 'AUCPEP', 'VZFO', 'CLFO', 'VZFP', 'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP', 'SPAN',
+    #  'MRTIFO', 'MRTIFP', 'MRTLST', 'CAVG', 'SWINGTAU', 'FLUCTP', 'FLUCTPTAU', 'AUCTAUD', 'CLSSF', 'AUCTAUPE', 'VZF',
+    #  'ACCIDX', 'TMIN', 'CMIN', 'NSAMPLES', 'TAU', 'CTAU', 'AUCTAU', 'AUMCTAU', 'MRTEVLST', 'MRTEVIFO', 'MRTEVIFP',
+    #  'MRTIVLST', 'MRTIVIFO', 'MRTIVIFP']
+
+    # set(TestCD).difference(set(trans_ucol))
+    # set(trans_ucol).difference(set(TestCD))
 
     nTestCD = len(TestCD)
     Res = pd.DataFrame({"Unit": [""] * nTestCD, "Factor": [1] * nTestCD}, index=TestCD)
 
-    for i in range(nTestCD):
-        Code = TestCD[i]
-        if Code in ["CMIN", "CMAX", "CLST", "CLSTP", "C0"]:
+    for Code in TestCD:
+        if Code == "DOSE":
+            Res.loc[Code, "Unit"] = doseUnit
+        elif Code in ["CMIN", "CMAX", "CLST", "CLSTP", "C0","CAVG", "CTAU"]:
             Res.loc[Code, "Unit"] = concUnit
-        if Code == "CMAXD":
+        elif Code == "CMAXD":
             Res.loc[Code, "Unit"] = f"{concUnit}/{doseUnit}"
-        if Code in ["TMIN","TMAX", "TLAG", "TLST", "LAMZHL", "LAMZLL", "LAMZUL", "MRTLST", "MRTIFO", "MRTIFP"
-                    "MRTIVLST", "MRTIVIFO", "MRTIVIFP", "MRTEVLST",
-                    "MRTEVIFO", "MRTEVIFP"]:
+        elif Code in ["TAU","TMIN", "TMAX", "TLAG", "TLST", "LAMZHL", "LAMZLL", "LAMZUL", "MRTLST", "MRTIFO", "MRTIFP"
+                    "MRTIVLST", "MRTIVIFO", "MRTIVIFP", "MRTEVLST", "MRTEVIFO", "MRTEVIFP"]:
             Res.loc[Code, "Unit"] = timeUnit
-        if Code == "LAMZ":
+        elif Code == "LAMZ":
             Res.loc[Code, "Unit"] = f"/{timeUnit}"
-        if Code in ["NSAMPLES", "b0", "LAMZNPT", "CORRXY", "R2", "R2ADJ", "SPAN"]:
+        elif Code in ["NSAMPLES", "b0", "LAMZNPT", "CORRXY", "R2", "R2ADJ", "SPAN"]:
             Res.loc[Code, "Unit"] = ""
-        if Code in ["AUCLST", "AUCALL", "AUCIFO", "AUCIFP"]:
+        elif Code in ["AUCLST", "AUCALL", "AUCIFO", "AUCIFP", "AUCTAU"]:
             Res.loc[Code, "Unit"] = f"{timeUnit}*{concUnit}"
-        if Code in ["AUCIFOD", "AUCIFPD", "AUCLSTD"]:
+        elif Code in ["AUCIFOD", "AUCIFPD", "AUCLSTD", "AUCTAUD"]:
             Res.loc[Code, "Unit"] = f"{timeUnit}*{concUnit}/{doseUnit}"
-        if Code in ["AUCPEO", "AUCPEP", "AUCPBEO", "AUCPBEP",
-                    "AUMCPEO", "AUMCPEP"]:
+        elif Code in ["AUCPEO", "AUCPEP", "AUCPBEO", "AUCPBEP", "AUMCPEO", "AUMCPEP", "FLUCTPTAU", "FLUCTP", "AUCTAUPE"]:
             Res.loc[Code, "Unit"] = "%"
-        if Code in ["AUMCLST", "AUMCIFO", "AUMCIFP"]:
+        elif Code in ["AUMCLST", "AUMCIFO", "AUMCIFP", "AUMCTAU"]:
             Res.loc[Code, "Unit"] = f"{timeUnit}^2*{concUnit}"
-        if Code in ["VZO", "VZP", "VZFO", "VZFP", "VSSO", "VSSP"]:
+        elif Code in ["VZO", "VZP", "VZF", "VZFO", "VZFP", "VSSO", "VSSP"]:
             if uAmt in rMol and doseUnit in rGram:
                 Res.loc[Code, ["Unit", "Factor"]] = [uVol, rMol[uAmt] / rGram[doseUnit] / MW]
             elif uAmt in rGram and doseUnit in rMol:
@@ -342,7 +349,7 @@ def Unit(code="", timeUnit="h", concUnit="ng/mL", doseUnit="mg", MW=0):
                 Res.loc[Code, ["Unit", "Factor"]] = [uVol, rGram[uAmt] / rGram[doseUnit]]
             else:
                 Res.loc[Code, ["Unit", "Factor"]] = [uVol, rMol[uAmt] / rMol[doseUnit]]
-        if Code in ["CLO", "CLP", "CLFO", "CLFP"]:
+        elif Code in ["CLO", "CLP", "CLFO", "CLFP", "CLSSF"]:
             if uAmt in rMol and doseUnit in rGram:
                 Res.loc[Code, ["Unit", "Factor"]] = [f"{uVol}/{timeUnit}", rMol[uAmt] / rGram[doseUnit] / MW]
             elif uAmt in rGram and doseUnit in rMol:
@@ -351,16 +358,15 @@ def Unit(code="", timeUnit="h", concUnit="ng/mL", doseUnit="mg", MW=0):
                 Res.loc[Code, ["Unit", "Factor"]] = [f"{uVol}/{timeUnit}", rGram[uAmt] / rGram[doseUnit]]
             else:
                 Res.loc[Code, ["Unit", "Factor"]] = [f"{uVol}/{timeUnit}", rMol[uAmt] / rMol[doseUnit]]
+        else:
+            Res.loc[Code, "Unit"] = ""
 
     Res["Factor"] = pd.to_numeric(Res["Factor"], errors='coerce')
     Res.loc[Res["Factor"] == 0, "Factor"] = np.nan
     Res.loc[Res["Factor"] == np.inf, "Factor"] = np.nan
 
-    if code == "":
-        result = Res
-    else:
-        result = Res.loc[code, :].to_dict()
-
+    if code == "": result = Res
+    else: result = Res.loc[code, :].to_dict()
     return result
 
 
@@ -510,10 +516,10 @@ def BestSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
 
     # result = dict(zip(res_columns, list(result)))
     if result['LAMZNPT'] > 0:
-        result['UsedPoints'] = list(
+        result['USEDPOINTS'] = list(
             range(np.where(x == result['LAMZLL'])[0][0], np.where(x == result['LAMZUL'])[0][0] + 1))
     else:
-        result['UsedPoints'] = list()
+        result['USEDPOINTS'] = list()
 
     return result
 
@@ -675,10 +681,10 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
 
     # result = dict(zip(res_columns, list(result)))
     if result['LAMZNPT'] > 0:
-        result['UsedPoints'] = list(
+        result['USEDPOINTS'] = list(
             range(np.where(x == result['LAMZLL'])[0][0], np.where(x == result['LAMZUL'])[0][0] + 1))
     else:
-        result['UsedPoints'] = list()
+        result['USEDPOINTS'] = list()
 
     return result
 
@@ -748,7 +754,7 @@ def DetSlope(x, y, SubTitle="", sel1=0, sel2=0):
         "LAMZUL": x[sel_indices[-1]],
         "CLSTP": np.exp(intercept - slope * np.max(x[np.isfinite(y)]))
     }
-    result["UsedPoints"] = sel_indices
+    result["USEDPOINTS"] = sel_indices
 
     return result
 
@@ -846,7 +852,7 @@ def IntAUC(x, y, t1, t2, Res, down="Linear"):
 
 
 def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", timeUnit="h", concUnit="ug/L", iAUC=None,
-         down="Linear", R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1, slopeMode='BEST'):
+         down="Log", R2ADJ=0.7, MW=0, SS=False, Keystring="", excludeDelta=1, slopeMode='BEST', ms_type='single'):
     """
     x, y, adm, dur, doseUnit, timeUnit, concUnit = tData[colTime].values, tData[colConc].values, adm, dur, doseUnit, timeUnit, concUnit
     R2ADJ, down, MW, SS, iAUC, Keystring, excludeDelta = R2ADJ, down, MW, SS, iAUC, strHeader, excludeDelta
@@ -886,6 +892,31 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
         raise ValueError("Check if the x is sorted in order!")
 
     n = len(x)
+
+    # if ms_type=='single':
+    #
+    #     ncar_single = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN',
+    #     'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD',
+    #     'AUCPEO', 'VZFO', 'CLFO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'VZFP', 'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO',
+    #     'AUMCIFP', 'AUMCPEP', 'MRTIVLST', 'MRTIVIFO', 'MRTIVIFP']
+    #
+    # elif ms_type=='multiple':
+    #
+    #     ncar_multiple = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN',
+    #      'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD',
+    #      'AUCPEO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'TMIN', 'CMIN', 'CTAU', 'CAVG', 'SWINGTAU', 'FLUCTP', 'FLUCTPTAU',
+    #      'CLSSF', 'MRTIVIFO', 'MRTIVIFP', 'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
+    #
+    # elif ms_type=='both':
+    #     ncar_both = ['NSAMPLES', 'DOSE', 'R2', 'R2ADJ', 'CORRXY', 'LAMZNPT', 'LAMZ', 'b0', 'LAMZLL', 'LAMZUL', 'LAMZHL', 'SPAN',
+    #      'TLAG', 'TMAX', 'CMAX', 'CMAXD', 'TLST', 'CLST', 'CLSTP', 'AUCLST', 'AUCLSTD', 'AUCALL', 'AUCIFO', 'AUCIFOD',
+    #      'AUCPEO', 'VZFO', 'CLFO', 'AUCIFP', 'AUCIFPD', 'AUCPEP', 'TMIN', 'CMIN', 'CTAU', 'CAVG', 'SWING', 'SWINGTAU',
+    #      'FLUCTP', 'FLUCTPTAU', 'CLSSF', 'VZFP', 'CLFP', 'AUMCLST', 'AUMCIFO', 'AUMCPEO', 'AUMCIFP', 'AUMCPEP',
+    #      'MRTIVLST', 'MRTIVIFO', 'MRTIVIFP', 'VZF', 'ACCIDX', 'AUCTAU', 'AUCTAU', 'AUCTAUD', 'AUCTAUPE', 'AUMCTAU']
+
+    # set(ncar_multiple).intersection(set(ncar_single)).difference(set(RetNames1))
+    # set(ncar_multiple).intersection(set(ncar_single))
+
     RetNames1 = ["b0", "CMAX", "CMIN", "CMAXD", "TMAX", "TLAG", "CLST",
                  "CLSTP", "TLST", "LAMZHL", "LAMZ", "LAMZLL", "LAMZUL",
                  "LAMZNPT", "CORRXY", "R2", "R2ADJ", "AUCLST", "AUCALL",
@@ -902,6 +933,8 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     else:
         RetNames1.extend(["VZO", "VZP", "CLO", "CLP", "MRTIVLST",
                           "MRTIVIFO", "MRTIVIFP", "VSSO", "VSSP"])
+
+
 
     Res = {name: np.nan for name in RetNames1}
 
@@ -959,8 +992,10 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
         for k in Res.keys():
             Res[k] *= Units.loc[k, 1]
 
-        Res["units"] = list(Units.loc[RetNames1, 0]) + [Units.loc["AUCLST", 0]] * niAUC
-        return Res
+        Res["NSAMPLES"] = Res["NSAMPLES"].astype(int)
+        Res["USEDPOINTS"] = [-1]
+        ret_units = list(Units.loc[RetNames1, 0]) + [Units.loc["AUCLST", 0]] * niAUC
+        return Res, ret_units
 
     # unique한 y값이 1개 이상일때
 
@@ -1005,9 +1040,12 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
         elif tRes["R2ADJ"] < R2ADJ:
             tRes = DetSlope(x1, y1, Keystring, sel1=np.where(x1 == tRes["LAMZLL"])[0], sel2=np.where(x1 == tRes["LAMZUL"])[0])
 
-    # Slope 찾기 (Pick the slope)
+    # UsedPoints 기록
 
-    tRes["UsedPoints"] = list(tRes.get("UsedPoints", list()) + np.where(x == tRes["LAMZLL"])[0][0] - np.where(x1 == tRes["LAMZLL"])[0][0]) if not np.isnan(tRes["LAMZLL"]) else list()
+    tRes["USEDPOINTS"] = list(tRes.get("USEDPOINTS", list()) + np.where(x == tRes["LAMZLL"])[0][0] - np.where(x1 == tRes["LAMZLL"])[0][0] - len(x)) if not np.isnan(tRes["LAMZLL"]) else list()
+
+    # 주요 Params 산출
+
     for key in ["R2", "R2ADJ", "LAMZNPT", "LAMZ", "b0", "CORRXY", "LAMZLL", "LAMZUL", "CLSTP"]:
         Res[key] = tRes[key]
 
@@ -1031,9 +1069,6 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     Res["AUMCIFP"] = Res["AUMCLST"] + Res["CLSTP"] * Res["TLST"] / Res["LAMZ"] + Res["CLSTP"] / Res["LAMZ"] ** 2
     Res["AUMCPEO"] = (1 - Res["AUMCLST"] / Res["AUMCIFO"]) * 100
     Res["AUMCPEP"] = (1 - Res["AUMCLST"] / Res["AUMCIFP"]) * 100
-
-
-
 
     if adm.strip().upper()=="INFUSION":
         infusion_time = np.nan               # 추후 input으로 추가 필요
@@ -1128,9 +1163,10 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     # len(RetNames1)
     # len(Units)
     Res["NSAMPLES"] = Res["NSAMPLES"].astype(int)
-    Res["units"] = Units.loc[RetNames1, 'Unit'].values.tolist() + [Units.loc["AUCLST", 'Unit']] * niAUC
-    Res["UsedPoints"] = tRes.get("UsedPoints", [])
-    return Res
+    Res["USEDPOINTS"] = tRes.get("USEDPOINTS", [])
+    # ret_units = Units.loc[RetNames1, 'Unit'].values.tolist() + [Units.loc["AUCLST", 'Unit']] * niAUC
+    ret_units = Units.loc[list(Res.keys()), 'Unit'].values.tolist() + [Units.loc["AUCLST", 'Unit']] * niAUC
+    return Res, ret_units
 
 def ncar_to_phoenix(result):
 
@@ -1147,7 +1183,7 @@ def ncar_to_phoenix(result):
                    "Swing_Tau", "Fluctuation%", "Fluctuation%_Tau", "CLss_F", "MRTINF_obs", "MRTINF_pred", "Vz_F",
                    "Accumulation_Index", "AUC_TAU", "AUC_TAU_D", "AUC_TAU_%Extrap", "AUMC_TAU"]
 
-    PW_Both = ['N_Samples', 'Dose', 'Rsq', 'Rsq_adjusted', 'Corr_XY', 'No_points_lambda_z', 'Lambda_z', 'Lambda_z_intercept', 'Lambda_z_lower', 'Lambda_z_upper', 'HL_Lambda_z', 'Span', 'Tlag', 'Tmax', 'Cmax', 'Cmax_D', 'Tlast', 'Clast', 'Clast_pred', 'AUClast', 'AUClast_D', 'AUCall', 'AUCINF_obs', 'AUCINF_D_obs', 'AUC_%Extrap_obs', 'Vz_F_obs', 'Cl_F_obs', 'AUCINF_pred', 'AUCINF_D_pred', 'AUC_%Extrap_pred', 'Tmin', 'Cmin', 'Ctau', 'Cavg', 'Swing', 'Swing_Tau', 'Fluctuation%', 'Fluctuation%_Tau', 'CLss_F', 'Vz_F_pred', 'Cl_F_pred', 'AUMClast', 'AUMCINF_obs', 'AUMC_%Extrap_obs', 'AUMCINF_pred', 'AUMC_%Extrap_pred', 'MRTlast', 'MRTINF_obs', 'MRTINF_pred', 'Vz_F', 'Accumulation_Index', 'AUC_TAU', 'AUC_TAU', 'AUC_TAU_D', 'AUC_TAU_%Extrap', 'AUMC_TAU']
+    PW_both = ["N_Samples", "Dose", "Rsq", "Rsq_adjusted", "Corr_XY", "No_points_lambda_z", "Lambda_z", "Lambda_z_intercept", "Lambda_z_lower", "Lambda_z_upper", "HL_Lambda_z", "Span", "Tlag", "Tmax", "Cmax", "Cmax_D", "Tlast", "Clast", "Clast_pred", "AUClast", "AUClast_D", "AUCall", "AUCINF_obs", "AUCINF_D_obs", "AUC_%Extrap_obs", "Vz_F_obs", "Cl_F_obs", "AUCINF_pred", "AUCINF_D_pred", "AUC_%Extrap_pred", "Tmin", "Cmin", "Ctau", "Cavg", "Swing", "Swing_Tau", "Fluctuation%", "Fluctuation%_Tau", "CLss_F", "Vz_F_pred", "Cl_F_pred", "AUMClast", "AUMCINF_obs", "AUMC_%Extrap_obs", "AUMCINF_pred", "AUMC_%Extrap_pred", "MRTlast", "MRTINF_obs", "MRTINF_pred", "Vz_F", "Accumulation_Index", "AUC_TAU", "AUC_TAU", "AUC_TAU_D", "AUC_TAU_%Extrap", "AUMC_TAU"]
 
     PW_dict = {'DOSE': 'Dose', 'R2': 'Rsq', 'R2ADJ': 'Rsq_adjusted', 'CORRXY': 'Corr_XY', 'LAMZNPT': 'No_points_lambda_z',
                'LAMZ': 'Lambda_z', 'b0': 'Lambda_z_intercept', 'LAMZLL': 'Lambda_z_lower', 'LAMZUL': 'Lambda_z_upper',
@@ -1162,15 +1198,26 @@ def ncar_to_phoenix(result):
                'CLSSF': 'CLss_F', 'AUCTAUPE': 'AUC_TAU_%Extrap', 'VZF': 'Vz_F', 'ACCIDX': 'Accumulation_Index', 'TMIN': 'Tmin',
                'CMIN': 'Cmin', 'NSAMPLES': 'N_Samples', 'TAU': 'TAU', 'CTAU': 'Ctau', 'AUCTAU': 'AUC_TAU','AUMCTAU': 'AUMC_TAU',
                "MRTEVLST": "MRTlast", "MRTEVIFO": "MRTINF_obs", "MRTEVIFP": "MRTINF_pred", "MRTIVLST": "MRTlast",
-               "MRTIVIFO": "MRTINF_obs", "MRTIVIFP": "MRTINF_pred",
+               "MRTIVIFO": "MRTINF_obs", "MRTIVIFP": "MRTINF_pred", "SWING":"Swing"
                }
 
+    # PW_rev_dict = dict([(v, k)for k,v in PW_dict.items()])
+
+    # [PW_rev_dict[c] for c in PW_single]
+    # [PW_rev_dict[c] for c in PW_multiple]
+    # [PW_rev_dict[c] for c in PW_both]
+
+    # set(PW_dict.values()).difference(set(PW_both))
+    # set(PW_both).difference(set(PW_dict.values()))
 
     # Res = result
-    if np.any(result['TAU'] == 0) or np.any(np.isnan(result['TAU'])):
+    if np.all(result['TAU'] == 0) or np.all(np.isnan(result['TAU'])):
         ms_type = 'single'
-    else:
+    elif not (np.any(result['TAU'] == 0) or np.all(np.isnan(result['TAU']))):
         ms_type = 'multiple'
+    else:
+        ms_type = 'both'
+
     key = list(result.columns)[:list(result.columns).index('NSAMPLES')]
 
     raw_cols = pd.Series(result.columns)
@@ -1182,5 +1229,7 @@ def ncar_to_phoenix(result):
         result = result[key + PW_single].copy()
     elif ms_type == 'multiple':
         result = result[key + PW_multiple].copy()
+    elif ms_type == 'both':
+        result = result[key + PW_both].copy()
     result = result.loc[:, ~result.columns.duplicated(keep='first')]
     return result
