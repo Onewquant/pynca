@@ -1243,6 +1243,9 @@ def ncar_to_pw(result, add_cols=[]):
     pw_dict.update({acol:acol for acol in add_keys})
 
     result.columns = [pw_dict[c] for c in list(result.columns)]
+
+    result.iloc[0] = result.iloc[0].map(lambda x:x.replace('h','hour').replace('hour^2','hour*hour'))
+
     return result
 
 
