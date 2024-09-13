@@ -105,19 +105,36 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
 
     if drug=='Metformin':
         if yscale=='linear':
-            plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=18)
+            # plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=18)
+            # plt.ylim(-50, 2500)
+            plt.yticks(np.linspace(0, 3100, 11, endpoint=True), fontsize=18)
             plt.ylim(-50, 2500)
         elif yscale=='log':
             plt.yticks([0,1,10,100,1000,3500], fontsize=18)
             plt.ylim(1, 3500)
-    else:
+    elif drug=='Empagliflozin':
+        if yscale == 'linear':
+            # plt.yticks(np.linspace(0, 650, 11, endpoint=True), fontsize=18)
+            # plt.ylim(-10,650)
+            plt.yticks(np.linspace(0, 550, 11, endpoint=True), fontsize=18)
+            plt.ylim(-10, 650)
+        elif yscale=='log':
+            plt.yticks([0,1,10,100,1000], fontsize=18)
+            plt.ylim(1, 1000)
+    elif drug=='Sitagliptin':
         if yscale == 'linear':
             plt.yticks(np.linspace(0, 650, 11, endpoint=True), fontsize=18)
             plt.ylim(-10,650)
         elif yscale=='log':
             plt.yticks([0,1,10,100,1000], fontsize=18)
             plt.ylim(1, 1000)
-
+    elif drug=='Lobeglitazone':
+        if yscale == 'linear':
+            plt.yticks(np.linspace(0, 60, 11, endpoint=True), fontsize=18)
+            plt.ylim(-10,65)
+        elif yscale=='log':
+            plt.yticks([0,1,10,100,1000], fontsize=18)
+            plt.ylim(1, 1000)
 
     if save_fig:
         if not os.path.exists(f"{result_file_dir_path}"): os.mkdir(f"{result_file_dir_path}")
