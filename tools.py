@@ -1,4 +1,5 @@
 import os
+import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,6 +11,11 @@ import seaborn as sns
 
 def g_mean(x):
     return np.exp((x.map(np.log)).mean())
+
+def get_digit_count(x):
+    if x == 0:
+        return 1  # 0은 1자리 숫자
+    return math.floor(math.log10(abs(x))) + 1
 
 def load_data_dict(drug_list, filename_format, input_file_dir_path):
     drug_prep_df_dict = dict()
