@@ -17,6 +17,28 @@ def get_digit_count(x):
         return 1  # 0은 1자리 숫자
     return math.floor(math.log10(abs(x))) + 1
 
+def get_lim_num_for_graph(ds):
+    ds_max = ds.max()
+    # ds_max = 3100
+    # ds_max = 550
+    # ds_max = 650
+    # ds_max = 60
+
+    if ds_max <= 0:
+        raise ValueError("최대값이 음수입니다.")
+
+    pos_num = get_digit_count(ds_max)
+    if pos_num == 1:
+        pass
+    if pos_num > 1:
+        round_max_num = int(round(ds_max, -(pos_num - 1)) * 10) / 10
+        if round_max_num > ds_max:
+            result_num = round_max_num
+        elif round_max_num <= ds_max:
+            result_num = int(ds_max / (10 ** (pos_num - 1))) * (10 ** (pos_num - 1)) + (10 ** (pos_num - 1) / 2)
+            while result_num == ds_max:
+                result_num += (10 ** (pos_num - 1) / 2)
+
 def load_data_dict(drug_list, filename_format, input_file_dir_path):
     drug_prep_df_dict = dict()
     for drug in drug_list:
