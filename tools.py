@@ -134,7 +134,7 @@ def time_to_conc_graph_ckd(gdf, sid_list, drug, hue, result_file_dir_path, hue_o
             # plt.yticks(np.linspace(0, 2500, 11, endpoint=True), fontsize=18)
             # plt.ylim(-50, 2500)
             plt.yticks(np.linspace(0, 3100, 11, endpoint=True), fontsize=18)
-            plt.ylim(-50, 2500)
+            plt.ylim(-50, 3100)
         elif yscale=='log':
             plt.yticks([0,1,10,100,1000,3500], fontsize=18)
             plt.ylim(1, 3500)
