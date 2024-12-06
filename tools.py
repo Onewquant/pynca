@@ -6,6 +6,38 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 from scipy.stats import linregress
 import seaborn as sns
+import glob
+import win32com.client
+
+## Data Reading
+
+def read_excel_xls(file_path, output_format='df'):
+    # file_path=fpath
+    # import win32com.client
+
+    excel = win32com.client.Dispatch("Excel.Application")
+    workbook = excel.Workbooks.Open(file_path)
+
+    # 첫 번째 시트 가져오기
+    sheet = workbook.Sheets(1)
+    data = []
+    # 데이터를 읽기
+
+    for dinx, row in enumerate(sheet.UsedRange.Rows):
+        if row.Value is None:
+            return None
+        data.append(row.Value[0])
+
+        # Excel 닫기
+    workbook.Close(SaveChanges=False)
+    excel.Quit()
+
+    if output_format == 'df':
+        colname = data[0]
+        df = pd.DataFrame(data[1:], columns=colname)
+        return df
+    else:
+        return data
 
 ## For Visualization
 
