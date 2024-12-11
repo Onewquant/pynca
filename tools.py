@@ -9,6 +9,29 @@ import seaborn as sns
 import glob
 import win32com.client
 
+## Math. ETC
+
+def get_combination_list(list1, list2, mode='diff_comb', verbose=True):
+    drug_combinations = set()
+    drug_comb_list = list()
+    count = 0
+    for drug1 in list1:
+        for drug2 in list2:
+            print(drug1,drug2)
+            if (drug1.lower()==drug2.lower()) and (mode == 'diff_comb'):
+                continue
+            if drug1.lower() > drug2.lower():comb_str = drug2 + '_' + drug1
+            elif drug1.lower() < drug2.lower():comb_str = drug1 + '_' + drug2
+            elif drug1.lower() == drug2.lower():comb_str = drug1 + '_' + drug2
+            else:
+                raise ValueError
+            count += 1
+            drug_combinations.add(comb_str)
+            drug_comb_list.append(comb_str)
+            if verbose:
+                print(f"{count} / {comb_str}")
+    return drug_combinations
+
 ## Data Reading
 
 def read_excel_xls(file_path, output_format='df'):
