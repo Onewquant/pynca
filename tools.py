@@ -745,7 +745,7 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             for inx, rsq_cand in enumerate(reversed(list(tmp_mat[:,1]))):
                 rsq_cand_inx = len(tmp_mat)-inx-1
                 rsq_delta = rsq_cand - prev_rsq
-                if (rsq_delta < TOL):
+                if (rsq_delta < -TOL):
                     # final_rsq = prev_rsq
                     final_inx = prev_inx
                     # print(prev_inx)
