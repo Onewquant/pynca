@@ -7,7 +7,6 @@ from matplotlib.widgets import Cursor
 from scipy.stats import linregress
 import seaborn as sns
 import glob
-import win32com.client
 
 ## Math. ETC
 
@@ -36,7 +35,7 @@ def get_combination_list(list1, list2, mode='diff_comb', verbose=True):
 
 def read_excel_xls(file_path, output_format='df'):
     # file_path=fpath
-    # import win32com.client
+    import win32com.client
 
     excel = win32com.client.Dispatch("Excel.Application")
     workbook = excel.Workbooks.Open(file_path)
