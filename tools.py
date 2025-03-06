@@ -370,18 +370,18 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
 
     # set(ncar_both).difference(set(PW_dict.keys()))
 
+    add_cols = list(iAUC['Name']) if isinstance(iAUC, pd.DataFrame) else []
+
     if ms_type == 'single':
-        Res = Res[key + ncar_single + ['USEDPOINTS']].copy()
+        Res = Res[key + ncar_single + add_cols + ['USEDPOINTS']].copy()
     elif ms_type == 'multiple':
-        Res = Res[key + ncar_multiple + ['USEDPOINTS']].copy()
+        Res = Res[key + ncar_multiple + add_cols + ['USEDPOINTS']].copy()
     elif ms_type == 'both':
-        Res = Res[key + ncar_both + ['USEDPOINTS']].copy()
+        Res = Res[key + ncar_both + add_cols + ['USEDPOINTS']].copy()
 
     Res = Res.loc[:, ~Res.columns.duplicated(keep='first')]
+    Res = ncar_to_pw(result=Res.copy(), add_cols=add_cols)
 
-    if colStyle=='pw':
-        add_cols = list(iAUC['Name']) if isinstance(iAUC, pd.DataFrame) else []
-        Res = ncar_to_pw(result=Res.copy(), add_cols=add_cols)
     return Res
 
 def Unit(code="", timeUnit="h", concUnit="ng/mL", doseUnit="mg", MW=0):
