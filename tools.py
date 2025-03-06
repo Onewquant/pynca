@@ -919,17 +919,39 @@ def AUC(x, y, down="Linear"):
     return result
 
 
+# def interpol(x, y, t, lamz, b0, down="Linear"):
+#     if t in x:
+#         return x, y
+#
+#     new_x = np.append(x, t)
+#     if down.strip().upper() == "LINEAR":
+#         idx = np.argsort(new_x)
+#         new_y = np.interp(t, x, y)
+#     elif down.strip().upper() == "LOG":
+#         idx = np.argsort(new_x)
+#         new_y = np.exp(np.interp(t, x, np.log(y)))
+#     else:
+#         return x, y
+#
+#     new_y = np.append(y, new_y)
+#     sorted_idx = np.argsort(new_x)
+#     return new_x[sorted_idx], new_y[sorted_idx]
+
 def interpol(x, y, t, lamz, b0, down="Linear"):
     if t in x:
         return x, y
 
     new_x = np.append(x, t)
+    min_positive = np.finfo(float).tiny  # 가장 작은 양수 값
+
+    if down.strip().upper() == "LOG" and np.any(y <= 0):
+        down = "LINEAR"  # y에 0 이하 값이 있으면 로그 보간 대신 선형 보간
+
     if down.strip().upper() == "LINEAR":
-        idx = np.argsort(new_x)
         new_y = np.interp(t, x, y)
     elif down.strip().upper() == "LOG":
-        idx = np.argsort(new_x)
-        new_y = np.exp(np.interp(t, x, np.log(y)))
+        y_safe = np.maximum(y, min_positive)  # 가장 작은 양수 값 적용
+        new_y = np.exp(np.interp(t, x, np.log(y_safe)))
     else:
         return x, y
 
