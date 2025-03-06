@@ -7,35 +7,13 @@ from matplotlib.widgets import Cursor
 from scipy.stats import linregress
 import seaborn as sns
 import glob
-
-## Math. ETC
-
-def get_combination_list(list1, list2, mode='diff_comb', verbose=True):
-    drug_combinations = set()
-    drug_comb_list = list()
-    count = 0
-    for drug1 in list1:
-        for drug2 in list2:
-            print(drug1,drug2)
-            if (drug1.lower()==drug2.lower()) and (mode == 'diff_comb'):
-                continue
-            if drug1.lower() > drug2.lower():comb_str = drug2 + '_' + drug1
-            elif drug1.lower() < drug2.lower():comb_str = drug1 + '_' + drug2
-            elif drug1.lower() == drug2.lower():comb_str = drug1 + '_' + drug2
-            else:
-                raise ValueError
-            count += 1
-            drug_combinations.add(comb_str)
-            drug_comb_list.append(comb_str)
-            if verbose:
-                print(f"{count} / {comb_str}")
-    return drug_combinations
+import win32com.client
 
 ## Data Reading
 
 def read_excel_xls(file_path, output_format='df'):
     # file_path=fpath
-    import win32com.client
+    # import win32com.client
 
     excel = win32com.client.Dispatch("Excel.Application")
     workbook = excel.Workbooks.Open(file_path)
@@ -312,6 +290,7 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
     # 군별 NCA 시행
     # i=0
     for i in range(nID):
+        # print(i)
         strHeader = f"{key[0]}={IDs.loc[i, key[0]]}"
         cond = (concData[key[0]] == IDs.loc[i, key[0]])
         grp_dict = {key[0]: IDs.loc[i, key[0]]}
@@ -381,7 +360,6 @@ def tblNCA(concData, key="Subject", colTime="Time", colConc="conc", dose=0, tau=
 
     Res = Res.loc[:, ~Res.columns.duplicated(keep='first')]
     Res = ncar_to_pw(result=Res.copy(), add_cols=add_cols)
-
     return Res
 
 def Unit(code="", timeUnit="h", concUnit="ng/mL", doseUnit="mg", MW=0):
@@ -663,7 +641,7 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
     y = np.array([  44.7,  247. ,  581. ,  890. , 1150. , 1140. , 1240. , 1330. ,
         958. ,  649. ,   77.1,   39.4])
     """
-
+    TOL_decimal_point = int(-np.log10(TOL))
     result = {
         'R2': np.nan, 'R2ADJ': np.nan, 'LAMZNPT': 0, 'LAMZ': np.nan,
         'b0': np.nan, 'CORRXY': np.nan, 'LAMZLL': np.nan, 'LAMZUL': np.nan, 'CLSTP': np.nan
@@ -741,6 +719,7 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             # final_rsq = np.nan
             prev_inx = np.nan
             prev_rsq = 0
+
             for inx, rsq_cand in enumerate(reversed(list(tmp_mat[:,1]))):
                 rsq_cand_inx = len(tmp_mat)-inx-1
                 rsq_delta = rsq_cand - prev_rsq
@@ -817,7 +796,6 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
         result['USEDPOINTS'] = list()
 
     return result
-
 
 def DetSlope(x, y, SubTitle="", sel1=0, sel2=0):
     def onpick(event):
@@ -937,66 +915,216 @@ def AUC(x, y, down="Linear"):
 #     sorted_idx = np.argsort(new_x)
 #     return new_x[sorted_idx], new_y[sorted_idx]
 
-def interpol(x, y, t, lamz, b0, down="Linear"):
-    if t in x:
-        return x, y
-
-    new_x = np.append(x, t)
-    min_positive = np.finfo(float).tiny  # 가장 작은 양수 값
-
-    if down.strip().upper() == "LOG" and np.any(y <= 0):
-        down = "LINEAR"  # y에 0 이하 값이 있으면 로그 보간 대신 선형 보간
-
-    if down.strip().upper() == "LINEAR":
-        new_y = np.interp(t, x, y)
-    elif down.strip().upper() == "LOG":
-        y_safe = np.maximum(y, min_positive)  # 가장 작은 양수 값 적용
-        new_y = np.exp(np.interp(t, x, np.log(y_safe)))
-    else:
-        return x, y
-
-    new_y = np.append(y, new_y)
-    sorted_idx = np.argsort(new_x)
-    return new_x[sorted_idx], new_y[sorted_idx]
 
 
-def lin_auc(x, y):
-    auc = np.trapz(y, x)
-    return auc
+def interpol(x, y, xnew, Slope=0, b0=0, down="Linear"):
+    Result = [x, y]  # 기본적으로 원래 x, y 반환
+
+    n = len(x)
+    if n != len(y):
+        print("Warning: Interpol - Length of x and y are different!")
+        newN = min(n, len(y))
+        x = x[:newN]
+        y = y[:newN]
+
+    # 데이터 타입 체크
+    if not (np.issubdtype(np.array(x).dtype, np.number) and
+            np.issubdtype(np.array(y).dtype, np.number) and
+            isinstance(down, str)):
+        return Result
+
+    # xnew이 기존 x 값에 이미 존재하는 경우 원래 데이터 반환
+    if xnew in x:
+        return Result
+
+    LEFT = RIGHT = False
+
+    # xnew보다 작은 값이 있는 경우
+    left_idx = np.where(np.array(x) < xnew)[0]
+    if left_idx.size > 0:  # 왼쪽 값이 존재하는 경우에만 실행
+        LEFT = True
+        x1_idx = np.max(left_idx)
+        x1 = x[x1_idx]
+        y1 = y[x1_idx]
+
+    # xnew보다 큰 값이 있는 경우
+    right_idx = np.where(np.array(x) > xnew)[0]
+    if right_idx.size > 0:  # 오른쪽 값이 존재하는 경우에만 실행
+        RIGHT = True
+        x2_idx = np.min(right_idx)
+        x2 = x[x2_idx]
+        y2 = y[x2_idx]
+
+    # 보간 수행
+    if LEFT and RIGHT:
+        if down.strip().upper() == "LOG" and y2 < y1 and y2 > 0:
+            ynew = np.exp(np.log(y1) + (np.log(y2) - np.log(y1)) / (x2 - x1) * (xnew - x1))
+        else:
+            ynew = y1 + (y2 - y1) / (x2 - x1) * (xnew - x1)
+
+    elif LEFT and not RIGHT:
+        ynew = np.exp(b0 - Slope * xnew)
+
+    elif not LEFT and RIGHT:
+        ynew = y2 / x2 * xnew
+
+    else:  # (LEFT == False & RIGHT == False)
+        return Result
+
+    # **🚨 핵심 수정 부분**
+    # 새로운 x, y 리스트 생성 후 정렬
+    new_x = np.sort(np.append(x, xnew))
+    new_y_unsorted = np.append(y, ynew)
+
+    # **정렬된 인덱스 적용**
+    sorted_indices = np.argsort(np.append(x, xnew))
+    new_y = new_y_unsorted[sorted_indices]
+
+    return [new_x.tolist(), new_y.tolist()]
 
 
-def log_auc(x, y):
-    k = (np.log(y[1:]) - np.log(y[:-1])) / (x[1:] - x[:-1])
-    auc = np.sum((y[:-1] - y[1:]) / k)
-    return auc
+def lin_auc_aumc(x, y):
+    # 결과를 저장할 딕셔너리 (R의 named vector 역할)
+    Result = {"AUC": np.nan, "AUMC": np.nan}
+
+    n = len(x)
+    if n != len(y) or not np.issubdtype(np.array(x).dtype, np.number) or not np.issubdtype(np.array(y).dtype,
+                                                                                           np.number):
+        return Result
+
+    # AUC 계산
+    Result["AUC"] = np.sum((x[1:] - x[:-1]) * (y[1:] + y[:-1])) / 2
+
+    # AUMC 계산
+    Result["AUMC"] = np.sum((x[1:] - x[:-1]) * (x[1:] * y[1:] + x[:-1] * y[:-1])) / 2
+
+    return Result
 
 
-def IntAUC(x, y, t1, t2, Res, down="Linear"):
-    if np.all(y == 0) and np.min(x) <= t1 and np.max(x) >= t2:
+def log_auc_aumc(x, y):
+    # 결과를 저장할 딕셔너리 (R의 named vector 역할)
+    Result = {"AUC": np.nan, "AUMC": np.nan}
+
+    n = len(x)
+    if n != len(y) or not np.issubdtype(np.array(x).dtype, np.number) or not np.issubdtype(np.array(y).dtype,
+                                                                                           np.number):
+        return Result
+
+    auc = 0.0
+    aumc = 0.0
+
+    for i in range(1, n):  # R에서 `for (i in 2:n)`은 Python에서는 `range(1, n)`
+        if y[i] < y[i - 1] and y[i] > 0:
+            k = (np.log(y[i - 1]) - np.log(y[i])) / (x[i] - x[i - 1])
+            auc += (y[i - 1] - y[i]) / k
+            aumc += ((x[i - 1] * y[i - 1] - x[i] * y[i]) / k) + ((y[i - 1] - y[i]) / (k * k))
+        else:
+            auc += (x[i] - x[i - 1]) * (y[i] + y[i - 1]) / 2
+            aumc += (x[i] - x[i - 1]) * (y[i] * x[i] + y[i - 1] * x[i - 1]) / 2
+
+    Result["AUC"] = auc
+    Result["AUMC"] = aumc
+    return Result
+
+# def IntAUC(x, y, t1, t2, Res, down="Linear"):
+#     if np.all(y == 0) and np.min(x) <= t1 and np.max(x) >= t2:
+#         return 0.0
+#
+#     n = len(x)
+#     if n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype, np.number):
+#         return np.nan
+#
+#     if np.isnan(Res.get("TLST")) or t1 > Res["TLST"]:
+#         return np.nan
+#
+#     tL = Res["TLST"]
+#     if t2 > np.max(x[~np.isnan(y)]) and np.isnan(Res.get("LAMZ")):
+#         return np.nan
+#
+#     x, y = interpol(x, y, t1, Res["LAMZ"], Res["b0"], down=down)
+#     x, y = interpol(x, y, t2, Res["LAMZ"], Res["b0"], down=down)
+#
+#     if down.strip().upper() == "LINEAR":
+#         if t2 <= tL:
+#             result = lin_auc(x[(x >= t1) & (x <= t2)], y[(x >= t1) & (x <= t2)])
+#         else:
+#             result = (lin_auc(x[(x >= t1) & (x <= tL)], y[(x >= t1) & (x <= tL)]) +
+#                       log_auc(x[(x >= tL) & (x <= t2)], y[(x >= tL) & (x <= t2)]))
+#     elif down.strip().upper() == "LOG":
+#         result = log_auc(x[(x >= t1) & (x <= t2)], y[(x >= t1) & (x <= t2)])
+#     else:
+#         result = np.nan
+#
+#     return result
+
+
+
+def IntAUCAUMC(x, y, t1, t2, Res, down="Linear", val_type="AUC"):
+    # numpy 배열로 변환
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+
+    # 조건: y가 모두 0이고 x가 t1과 t2를 포함하는 경우 0 반환
+    if np.all(y == 0) and np.nanmin(x) <= t1 and np.nanmax(x) >= t2:
         return 0.0
 
     n = len(x)
     if n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype, np.number):
         return np.nan
 
-    if np.isnan(Res.get("TLST")) or t1 > Res["TLST"]:
+    # Res["TLST"]가 NaN이거나 t1이 TLST보다 크면 NaN 반환
+    if np.isnan(Res.get("TLST", np.nan)) or t1 > Res["TLST"]:
         return np.nan
 
     tL = Res["TLST"]
-    if t2 > np.max(x[~np.isnan(y)]) and np.isnan(Res.get("LAMZ")):
+
+    # t2가 y 값이 NaN이 아닌 x의 최대값보다 크고 Res["LAMZ"]가 NaN이면 NaN 반환
+    if t2 > np.nanmax(x[~np.isnan(y)]) and np.isnan(Res.get("LAMZ", np.nan)):
         return np.nan
 
-    x, y = interpol(x, y, t1, Res["LAMZ"], Res["b0"], down=down)
-    x, y = interpol(x, y, t2, Res["LAMZ"], Res["b0"], down=down)
+    # 보간 수행
+    new_x, new_y = interpol(x, y, t1, Res["LAMZ"], Res["b0"], down=down)
+    new_x, new_y = interpol(new_x, new_y, t2, Res["LAMZ"], Res["b0"], down=down)
 
+    x, y = np.asarray(new_x), np.asarray(new_y)  # 다시 numpy 배열로 변환
+
+    # Boolean Mask 처리 (🚨 올바른 형식으로 변환)
+    mask1 = ((x >= t1) & (x <= t2)).astype(bool)
+    mask2 = ((x >= t1) & (x <= tL)).astype(bool)
+    mask3 = ((x >= tL) & (x <= t2)).astype(bool)
+
+    # 🚨 `TypeError` 방지: `mask1`이 `bool` 배열인지 확인
+    if mask1.dtype != bool:
+        mask1 = mask1.astype(bool)
+    if mask2.dtype != bool:
+        mask2 = mask2.astype(bool)
+    if mask3.dtype != bool:
+        mask3 = mask3.astype(bool)
+
+    # 🚨 `x`와 `y`를 boolean mask로 필터링할 때 `copy()` 사용
     if down.strip().upper() == "LINEAR":
         if t2 <= tL:
-            result = lin_auc(x[(x >= t1) & (x <= t2)], y[(x >= t1) & (x <= t2)])
+            x_filtered = x[mask1].copy()
+            y_filtered = y[mask1].copy()
+            if len(x_filtered) == 0 or len(y_filtered) == 0:
+                return np.nan
+            result = lin_auc_aumc(x_filtered, y_filtered)[val_type]
         else:
-            result = (lin_auc(x[(x >= t1) & (x <= tL)], y[(x >= t1) & (x <= tL)]) +
-                      log_auc(x[(x >= tL) & (x <= t2)], y[(x >= tL) & (x <= t2)]))
+            x_lin = x[mask2].copy()
+            y_lin = y[mask2].copy()
+            x_log = x[mask3].copy()
+            y_log = y[mask3].copy()
+            if len(x_lin) == 0 or len(y_lin) == 0 or len(x_log) == 0 or len(y_log) == 0:
+                return np.nan
+            result = lin_auc_aumc(x_lin, y_lin)[val_type] + log_auc_aumc(x_log, y_log)[val_type]
+
     elif down.strip().upper() == "LOG":
-        result = log_auc(x[(x >= t1) & (x <= t2)], y[(x >= t1) & (x <= t2)])
+        x_filtered = x[mask1].copy()
+        y_filtered = y[mask1].copy()
+        if len(x_filtered) == 0 or len(y_filtered) == 0:
+            return np.nan
+        result = log_auc_aumc(x_filtered, y_filtered)[val_type]
+
     else:
         result = np.nan
 
@@ -1132,9 +1260,9 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
                         if np.sum(x == 0) == 0:
                             x2 = np.concatenate(([0], x))
                             y2 = np.concatenate(([uY[0]], y))
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUCAUMC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
                     else:
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUCAUMC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
 
                     AddUnit = Units[Units['Parameter'] == "AUCLST"].copy()
                     AddUnit['Parameter'] = iAUC.loc[i, "Name"]
@@ -1299,9 +1427,9 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
                 RetNames1 = list(set(RetNames1).union(iAUC["Name"]))
                 for i in range(niAUC):
                     if adm.strip().upper() == "BOLUS":
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUCAUMC(x2, y2, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
                     else:
-                        Res[iAUC.loc[i, "Name"]] = IntAUC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
+                        Res[iAUC.loc[i, "Name"]] = IntAUCAUMC(x, y, iAUC.loc[i, "Start"], iAUC.loc[i, "End"], Res, down=down)
 
                     AddUnit = Units[Units['Parameter'] == "AUCLST"].copy()
                     AddUnit['Parameter'] = iAUC.loc[i, "Name"]
