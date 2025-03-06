@@ -7,13 +7,35 @@ from matplotlib.widgets import Cursor
 from scipy.stats import linregress
 import seaborn as sns
 import glob
-import win32com.client
+
+## Math. ETC
+
+def get_combination_list(list1, list2, mode='diff_comb', verbose=True):
+    drug_combinations = set()
+    drug_comb_list = list()
+    count = 0
+    for drug1 in list1:
+        for drug2 in list2:
+            print(drug1,drug2)
+            if (drug1.lower()==drug2.lower()) and (mode == 'diff_comb'):
+                continue
+            if drug1.lower() > drug2.lower():comb_str = drug2 + '_' + drug1
+            elif drug1.lower() < drug2.lower():comb_str = drug1 + '_' + drug2
+            elif drug1.lower() == drug2.lower():comb_str = drug1 + '_' + drug2
+            else:
+                raise ValueError
+            count += 1
+            drug_combinations.add(comb_str)
+            drug_comb_list.append(comb_str)
+            if verbose:
+                print(f"{count} / {comb_str}")
+    return drug_combinations
 
 ## Data Reading
 
 def read_excel_xls(file_path, output_format='df'):
     # file_path=fpath
-    # import win32com.client
+    import win32com.client
 
     excel = win32com.client.Dispatch("Excel.Application")
     workbook = excel.Workbooks.Open(file_path)
@@ -641,7 +663,7 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
     y = np.array([  44.7,  247. ,  581. ,  890. , 1150. , 1140. , 1240. , 1330. ,
         958. ,  649. ,   77.1,   39.4])
     """
-    TOL_decimal_point = int(-np.log10(TOL))
+
     result = {
         'R2': np.nan, 'R2ADJ': np.nan, 'LAMZNPT': 0, 'LAMZ': np.nan,
         'b0': np.nan, 'CORRXY': np.nan, 'LAMZLL': np.nan, 'LAMZUL': np.nan, 'CLSTP': np.nan
@@ -719,7 +741,6 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
             # final_rsq = np.nan
             prev_inx = np.nan
             prev_rsq = 0
-
             for inx, rsq_cand in enumerate(reversed(list(tmp_mat[:,1]))):
                 rsq_cand_inx = len(tmp_mat)-inx-1
                 rsq_delta = rsq_cand - prev_rsq
@@ -796,6 +817,7 @@ def SnuhcptSlope(x, y, adm="Extravascular", TOL=1e-04, excludeDelta=1):
         result['USEDPOINTS'] = list()
 
     return result
+
 
 def DetSlope(x, y, SubTitle="", sel1=0, sel2=0):
     def onpick(event):
@@ -895,25 +917,6 @@ def AUC(x, y, down="Linear"):
     result["AUMC"] = np.cumsum(res[:, 1])
 
     return result
-
-
-# def interpol(x, y, t, lamz, b0, down="Linear"):
-#     if t in x:
-#         return x, y
-#
-#     new_x = np.append(x, t)
-#     if down.strip().upper() == "LINEAR":
-#         idx = np.argsort(new_x)
-#         new_y = np.interp(t, x, y)
-#     elif down.strip().upper() == "LOG":
-#         idx = np.argsort(new_x)
-#         new_y = np.exp(np.interp(t, x, np.log(y)))
-#     else:
-#         return x, y
-#
-#     new_y = np.append(y, new_y)
-#     sorted_idx = np.argsort(new_x)
-#     return new_x[sorted_idx], new_y[sorted_idx]
 
 
 
@@ -1025,39 +1028,6 @@ def log_auc_aumc(x, y):
     Result["AUC"] = auc
     Result["AUMC"] = aumc
     return Result
-
-# def IntAUC(x, y, t1, t2, Res, down="Linear"):
-#     if np.all(y == 0) and np.min(x) <= t1 and np.max(x) >= t2:
-#         return 0.0
-#
-#     n = len(x)
-#     if n != len(y) or not np.issubdtype(x.dtype, np.number) or not np.issubdtype(y.dtype, np.number):
-#         return np.nan
-#
-#     if np.isnan(Res.get("TLST")) or t1 > Res["TLST"]:
-#         return np.nan
-#
-#     tL = Res["TLST"]
-#     if t2 > np.max(x[~np.isnan(y)]) and np.isnan(Res.get("LAMZ")):
-#         return np.nan
-#
-#     x, y = interpol(x, y, t1, Res["LAMZ"], Res["b0"], down=down)
-#     x, y = interpol(x, y, t2, Res["LAMZ"], Res["b0"], down=down)
-#
-#     if down.strip().upper() == "LINEAR":
-#         if t2 <= tL:
-#             result = lin_auc(x[(x >= t1) & (x <= t2)], y[(x >= t1) & (x <= t2)])
-#         else:
-#             result = (lin_auc(x[(x >= t1) & (x <= tL)], y[(x >= t1) & (x <= tL)]) +
-#                       log_auc(x[(x >= tL) & (x <= t2)], y[(x >= tL) & (x <= t2)]))
-#     elif down.strip().upper() == "LOG":
-#         result = log_auc(x[(x >= t1) & (x <= t2)], y[(x >= t1) & (x <= t2)])
-#     else:
-#         result = np.nan
-#
-#     return result
-
-
 
 def IntAUCAUMC(x, y, t1, t2, Res, down="Linear", val_type="AUC"):
     # numpy 배열로 변환
@@ -1445,6 +1415,7 @@ def sNCA(x, y, dose=0, tau=np.nan ,adm="Extravascular", dur=0, doseUnit="mg", ti
     Res["USEDPOINTS"] = tRes.get("USEDPOINTS", [])
     ret_units = {reskey: Units[Units['Parameter'] == reskey].iat[0, 1] for reskey in list(Res.keys())}
     return Res, ret_units
+
 
 def ncar_to_pw(result, add_cols=[]):
 
